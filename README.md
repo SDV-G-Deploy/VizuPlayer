@@ -40,6 +40,7 @@ Implemented and working in scope:
 - Web Audio API analysis pipeline
 - Extracted metrics: `bass`, `mid`, `treble`, `amplitude`
 - Periodic readable console output for validation
+- Demo test track in repo: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
 
 Out of scope for this stage:
 

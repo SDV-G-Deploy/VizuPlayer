@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Local-first workflow rules
 - Baseline project structure with `index.html`, `src/*`, `assets/*`, and `docs/*`
 - Starter module files for audio, visual, UI, and core bootstrapping
+- Demo MP3 asset for local validation: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
 
 ### Updated
 

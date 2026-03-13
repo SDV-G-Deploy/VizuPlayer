@@ -7,6 +7,7 @@
 - Requested project folder layout (`src/audio`, `src/visual`, `src/ui`, `src/core`, `assets/music`, `assets/shaders`, `docs`)
 - Starter files for all requested modules
 - Documentation files in `docs/`
+- Demo MP3 asset for local validation: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
 
 ### Updated
 

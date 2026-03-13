@@ -14,3 +14,4 @@
   - bass/mid/treble/amplitude extraction
   - periodic structured console logging
 - Kept visualizer modules untouched in this pass to preserve scope.
+- Added demo track for local testing at `assets/music/little-more-intense-cosmo-puzzle-1.mp3`.

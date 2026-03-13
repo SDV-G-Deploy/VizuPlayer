@@ -18,6 +18,7 @@ Validate the first working audio-analysis pipeline for the reusable web engine f
 - Added extracted metrics: `bass`, `mid`, `treble`, `amplitude`
 - Added readable structured analysis output in UI and browser console
 - Added basic guard rails for no-file and invalid-load states
+- Added demo MP3 asset for testing: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
 
 ## Working Now
 
@@ -25,6 +26,7 @@ Validate the first working audio-analysis pipeline for the reusable web engine f
 - User can play/pause the selected file
 - During playback, analysis values update frame-by-frame
 - Console receives periodic structured analysis logs
+- Repository contains a local demo audio asset for quick validation
 
 ## Known Limitations
 
