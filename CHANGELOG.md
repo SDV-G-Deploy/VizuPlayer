@@ -14,3 +14,9 @@ All notable changes to this project will be documented in this file.
 ### Updated
 
 - Root `AGENTS.md` declared as canonical policy source and required sync target for local workspace and GitHub.
+- Implemented MVP audio analysis pipeline:
+  - local audio file selection
+  - play/pause playback control
+  - analyser wiring through Web Audio API
+  - extracted bass/mid/treble/amplitude metrics
+  - periodic structured console output for validation

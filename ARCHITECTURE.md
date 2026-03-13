@@ -9,17 +9,35 @@ High-level architecture notes for the VizuPlayer engine.
 - Web browsers (desktop/mobile)
 - Browser game runtime environments
 
-## Planned Modules (Template)
+## Current Layering Direction
 
-- Playback core
-- Track queue and state manager
-- Timing/sync layer
-- Effects and processing layer
-- Adapter layer for game integration
+- Audio engine layer
+- Analyser layer
+- UI/player controls layer
+- Visualizer layer (next stage)
+- Game integration API layer (later stage)
 
-## Technical Questions (TBD)
+## Implemented Foundation (Current)
 
-- Web Audio API usage model
-- Latency and sync strategy
-- Memory lifecycle for assets
-- Error/recovery policy
+- `audioEngine.js`:
+  - owns `AudioContext`
+  - owns `HTMLAudioElement`
+  - builds stable media source -> analyser -> destination chain
+  - handles local file loading and playback methods
+- `analyser.js`:
+  - owns analyser sampling
+  - computes `bass`, `mid`, `treble`, `amplitude`
+- `app.js`:
+  - wires UI events to engine methods
+  - runs frame loop and periodic structured logging
+
+## Known Constraints
+
+- Browser autoplay restrictions require user gesture before playback
+- `file://` module loading may be restricted; local HTTP serving is preferred
+
+## Technical Questions (Next)
+
+- Shared timing contract between analyser and future visualizer
+- API format for game integration consumers
+- Performance limits for per-frame analysis + rendering

@@ -1,6 +1,10 @@
 ﻿export class AudioEngine {
   constructor() {
     this.audioContext = null;
+    this.audioElement = null;
+    this.mediaElementSource = null;
+    this.analyserNode = null;
+    this.currentObjectUrl = "";
   }
 
   async ensureContext() {
@@ -17,37 +21,118 @@
     return this.audioContext;
   }
 
-  createAnalyser(options = {}) {
-    if (!this.audioContext) {
-      throw new Error("Audio context is not initialized.");
+  async initializeGraph(options = {}) {
+    const context = await this.ensureContext();
+
+    if (!this.audioElement) {
+      this.audioElement = new Audio();
+      this.audioElement.preload = "auto";
     }
 
-    const analyser = this.audioContext.createAnalyser();
+    if (!this.mediaElementSource) {
+      this.mediaElementSource = context.createMediaElementSource(this.audioElement);
+    }
+
+    if (!this.analyserNode) {
+      this.analyserNode = context.createAnalyser();
+      this.mediaElementSource.connect(this.analyserNode);
+      this.analyserNode.connect(context.destination);
+    }
+
     if (options.fftSize) {
-      analyser.fftSize = options.fftSize;
-    }
-    if (typeof options.smoothingTimeConstant === "number") {
-      analyser.smoothingTimeConstant = options.smoothingTimeConstant;
+      this.analyserNode.fftSize = options.fftSize;
     }
 
-    return analyser;
+    if (typeof options.smoothingTimeConstant === "number") {
+      this.analyserNode.smoothingTimeConstant = options.smoothingTimeConstant;
+    }
+
+    return {
+      audioContext: context,
+      audioElement: this.audioElement,
+      analyserNode: this.analyserNode,
+    };
   }
 
-  async createSourceFromUrl(url) {
-    if (!this.audioContext) {
-      throw new Error("Audio context is not initialized.");
+  async loadFile(file, graphOptions = {}) {
+    if (!(file instanceof File)) {
+      throw new Error("Please choose a valid audio file.");
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to load audio file: ${response.status}`);
+    await this.initializeGraph(graphOptions);
+
+    if (this.currentObjectUrl) {
+      URL.revokeObjectURL(this.currentObjectUrl);
+      this.currentObjectUrl = "";
     }
 
-    const data = await response.arrayBuffer();
-    const buffer = await this.audioContext.decodeAudioData(data);
-    const source = this.audioContext.createBufferSource();
-    source.buffer = buffer;
+    this.currentObjectUrl = URL.createObjectURL(file);
+    this.audioElement.src = this.currentObjectUrl;
+    this.audioElement.load();
 
-    return source;
+    await this.waitForAudioCanPlay();
+  }
+
+  waitForAudioCanPlay() {
+    if (!this.audioElement) {
+      return Promise.reject(new Error("Audio element is not initialized."));
+    }
+
+    if (this.audioElement.readyState >= 2) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const onCanPlay = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(new Error("Unable to load selected audio file."));
+      };
+
+      const cleanup = () => {
+        this.audioElement.removeEventListener("canplay", onCanPlay);
+        this.audioElement.removeEventListener("error", onError);
+      };
+
+      this.audioElement.addEventListener("canplay", onCanPlay);
+      this.audioElement.addEventListener("error", onError);
+    });
+  }
+
+  async play() {
+    if (!this.audioElement || !this.audioElement.src) {
+      throw new Error("No audio file loaded.");
+    }
+
+    const context = await this.ensureContext();
+    if (context.state === "suspended") {
+      await context.resume();
+    }
+
+    await this.audioElement.play();
+  }
+
+  pause() {
+    if (!this.audioElement) {
+      return;
+    }
+
+    this.audioElement.pause();
+  }
+
+  getAudioContext() {
+    return this.audioContext;
+  }
+
+  getAudioElement() {
+    return this.audioElement;
+  }
+
+  getAnalyserNode() {
+    return this.analyserNode;
   }
 }
