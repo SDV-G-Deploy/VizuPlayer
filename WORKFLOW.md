@@ -10,8 +10,9 @@ All development is performed locally in:
 
 1. Implement changes locally.
 2. Run local checks.
-3. Update project documentation (`*.md`) with latest progress and plan.
-4. Push to GitHub only if checks are green.
+3. Update root `AGENTS.md` when process/policy changed.
+4. Update project documentation (`*.md`) with latest progress and plan.
+5. Push to GitHub only if checks are green.
 
 ## Local Checks Template
 
@@ -31,3 +32,4 @@ After each code pass, update at least:
 - `ROADMAP.md` (current position, done, next)
 - `CHANGELOG.md` (entry for notable change)
 - Any architecture/workflow file affected by the change
+- Root `AGENTS.md` if process rules were updated

@@ -1,5 +1,8 @@
 ﻿# AGENTS (Docs Scope)
 
+This file is a helper mirror for docs folder context.
+The canonical policy source is root `AGENTS.md`.
+
 ## Working context
 
 - Local workspace: `C:\ForCodexAnd\VizuPlayer`
@@ -10,6 +13,7 @@
 1. Implement all changes locally first.
 2. Push to GitHub only after local checks pass.
 3. After each code pass, update relevant `*.md` files (at minimum project state and roadmap documents).
+4. Sync policy updates with root `AGENTS.md` first.
 
 ## Documentation update targets
 

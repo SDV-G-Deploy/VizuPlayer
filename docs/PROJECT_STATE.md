@@ -16,6 +16,7 @@ Set up a clean baseline repository structure for the VizuPlayer web engine.
 - Core audio placeholders (`audioEngine`, `musicPlayer`, `analyser`)
 - Visual placeholders (`visualizer`, `nodeNetwork`, `particles`)
 - UI placeholder (`playerUI`)
+- Governance update: root `AGENTS.md` is now explicit canonical policy source (local + GitHub sync)
 
 ## Next Targets
 

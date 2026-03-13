@@ -36,6 +36,7 @@ VizuPlayer/
 1. Work locally first in `C:\ForCodexAnd\VizuPlayer`.
 2. Push only after local checks pass.
 3. Update relevant `*.md` docs after every code pass.
+4. Root `AGENTS.md` is the canonical policy file and must stay current locally and in GitHub.
 
 ## Reference Docs
 

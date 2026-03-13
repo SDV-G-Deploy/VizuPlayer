@@ -10,3 +10,7 @@ All notable changes to this project will be documented in this file.
 - Local-first workflow rules
 - Baseline project structure with `index.html`, `src/*`, `assets/*`, and `docs/*`
 - Starter module files for audio, visual, UI, and core bootstrapping
+
+### Updated
+
+- Root `AGENTS.md` declared as canonical policy source and required sync target for local workspace and GitHub.
