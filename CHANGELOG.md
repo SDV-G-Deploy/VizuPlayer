@@ -7,4 +7,6 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Initial documentation scaffold (`README.md`, `AGENTS.md`, `WORKFLOW.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, `CHECKLIST.md`, `CHANGELOG.md`)
-- Initial local-first workflow rules
+- Local-first workflow rules
+- Baseline project structure with `index.html`, `src/*`, `assets/*`, and `docs/*`
+- Starter module files for audio, visual, UI, and core bootstrapping

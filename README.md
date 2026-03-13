@@ -1,21 +1,46 @@
 ﻿# VizuPlayer
 
-Documentation scaffold for a future web music player engine.
+Web music engine scaffold for browser and web-game integration.
 
-## Status
+## Current Structure
 
-Project bootstrap stage. Files are templates and will be filled incrementally.
+```text
+VizuPlayer/
+  index.html
+  src/
+    audio/
+      audioEngine.js
+      analyser.js
+      musicPlayer.js
+    visual/
+      visualizer.js
+      nodeNetwork.js
+      particles.js
+    ui/
+      playerUI.js
+    core/
+      config.js
+      app.js
+  assets/
+    music/
+    shaders/
+  docs/
+    PROJECT_STATE.md
+    SESSION_LOG.md
+    CHANGELOG_AGENT.md
+    AGENTS.md
+```
 
-## Documents
+## Process Rules
 
-- [AGENTS.md](./AGENTS.md)
-- [WORKFLOW.md](./WORKFLOW.md)
-- [ROADMAP.md](./ROADMAP.md)
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [CHECKLIST.md](./CHECKLIST.md)
-- [CHANGELOG.md](./CHANGELOG.md)
+1. Work locally first in `C:\ForCodexAnd\VizuPlayer`.
+2. Push only after local checks pass.
+3. Update relevant `*.md` docs after every code pass.
 
-## Next Goal
+## Reference Docs
 
-Define the minimal web audio engine core and integration requirements for browser games.
+- [Root AGENTS](./AGENTS.md)
+- [Workflow](./WORKFLOW.md)
+- [Roadmap](./ROADMAP.md)
+- [Project State](./docs/PROJECT_STATE.md)
+- [Session Log](./docs/SESSION_LOG.md)
