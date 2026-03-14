@@ -45,3 +45,29 @@
 - Added modular visualizer network config in `src/core/config.js` and passed config through `src/core/app.js`.
 - Preserved single RAF render loop and existing playback state transitions (`play`, `pause`, `stop`, replace track).
 - Updated project state and roadmap/changelog docs for this pass.
+
+## 2026-03-14 (Lifecycle Hardening Fix Pass)
+
+- Performed focused audit-fix pass for lifecycle/state correctness with no new visual feature scope.
+- Introduced explicit phase model in `src/audio/musicPlayer.js` (`idle/loading/ready/playing/paused/ended/error`) and exposed phase via `getState()`.
+- Added centralized command orchestration in `src/core/app.js`:
+  - one command controller for UI and public API
+  - command map for load/play/pause/stop
+  - phase-derived control gating and status behavior
+- Implemented serialized latest-wins load handling in `src/core/app.js`:
+  - single load worker
+  - one queued latest request retained
+  - stale completion/error commit suppression via request id checks
+  - load invalidation when stop occurs during loading
+- Hardened URL/demo load completion behavior in `src/audio/audioEngine.js`:
+  - timeout support in `waitForAudioCanPlay(..., { timeoutMs })`
+  - URL/demo timeout wired from config (`urlLoadTimeoutMs`)
+  - added `unload()` helper for clean source reset and load abort path
+- Normalized pause/ended/stop analysis semantics in `src/core/app.js`:
+  - pause decays metrics/visual input toward idle
+  - ended resets analysis to zero
+  - stop resets analysis to zero and returns coherent phase/status
+- Added same-file local reselect support in `src/ui/playerUI.js` by clearing file input value after change handler completion.
+- Added analysis log gating config (`APP_CONFIG.analyser.enableLogging`).
+- Ran syntax checks with `node --check` on all touched JS files.
+- Updated state/architecture/changelog docs to reflect real guarantees after hardening.

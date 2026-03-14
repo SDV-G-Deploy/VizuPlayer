@@ -53,3 +53,20 @@
 - Integrated network rendering into `src/visual/visualizer.js` without replacing existing spectrum layer.
 - Added visualizer network config in `src/core/config.js` and passed it through `src/core/app.js`.
 - Preserved one stable animation loop and existing playback state behavior.
+
+### Updated (Lifecycle Hardening Fix Pass)
+
+- Added explicit phase model to playback/app state (`idle`, `loading`, `ready`, `playing`, `paused`, `ended`, `error`).
+- Replaced split command behavior with one orchestration path shared by UI and `window.vizuPlayer` API methods.
+- Added serialized latest-wins load coordination in `src/core/app.js`:
+  - one active load worker
+  - latest pending load request retention
+  - stale completion/error suppression by request id
+- Added deterministic URL/demo load timeout in `src/audio/audioEngine.js` and wired config (`playback.urlLoadTimeoutMs`).
+- Added loading-phase control gating for file/url inputs and transport controls via phase-derived UI state.
+- Normalized non-playing analysis semantics:
+  - pause decays toward idle
+  - ended resets to idle analysis values
+  - stop resets metrics/visual input cleanly
+- Added same-file reselection support for local file input after each handled change event.
+- Gated analysis console logging with config flag (`analyser.enableLogging`) to avoid noisy default runtime output.

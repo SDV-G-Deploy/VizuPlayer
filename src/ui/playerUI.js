@@ -55,8 +55,10 @@ export class PlayerUI {
     this.renderAnalysis({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
     this.setStatus("waiting for track");
     this.setControls({
+      canLoadLocal: true,
       canLoadUrl: true,
       canLoadDemo: true,
+      canEditTrackUrl: true,
       canPlay: false,
       canPause: false,
       canStop: false,
@@ -66,7 +68,10 @@ export class PlayerUI {
   bindEvents(handlers) {
     this.fileInput.addEventListener("change", (event) => {
       const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
-      this.runHandler(handlers.onLocalFileSelected, file);
+      this.runHandler(handlers.onLocalFileSelected, file).finally(() => {
+        // Allow selecting the same file repeatedly after each handled change event.
+        this.fileInput.value = "";
+      });
     });
 
     this.loadUrlButton.addEventListener("click", () => {
@@ -136,12 +141,16 @@ export class PlayerUI {
   }
 
   setControls({
+    canLoadLocal = true,
     canLoadUrl = true,
     canLoadDemo = true,
+    canEditTrackUrl = true,
     canPlay = false,
     canPause = false,
     canStop = false,
   }) {
+    this.fileInput.disabled = !canLoadLocal;
+    this.trackUrlInput.disabled = !canEditTrackUrl;
     this.loadUrlButton.disabled = !canLoadUrl;
     this.loadDemoButton.disabled = !canLoadDemo;
     this.playButton.disabled = !canPlay;

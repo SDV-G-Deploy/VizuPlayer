@@ -1,8 +1,9 @@
 export const APP_CONFIG = Object.freeze({
   appName: "VizuPlayer",
-  version: "0.5.0",
+  version: "0.5.1",
   playback: {
     bundledDemoTrackUrl: "./assets/music/little-more-intense-cosmo-puzzle-1.mp3",
+    urlLoadTimeoutMs: 12000,
   },
   ui: {
     fileInputId: "audio-file-input",
@@ -24,6 +25,7 @@ export const APP_CONFIG = Object.freeze({
     fftSize: 2048,
     smoothingTimeConstant: 0.82,
     logIntervalMs: 400,
+    enableLogging: false,
     bands: {
       bass: [20, 250],
       mid: [250, 2000],
@@ -32,6 +34,7 @@ export const APP_CONFIG = Object.freeze({
   },
   visualizer: {
     barCount: 64,
+    pausedAnalysisDecayAlpha: 0.14,
     network: {
       nodeRadius: 5.4,
     },
