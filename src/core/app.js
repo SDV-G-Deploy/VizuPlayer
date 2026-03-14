@@ -48,6 +48,7 @@ async function bootstrap() {
   const visualizer = new Visualizer({
     canvas: ui.getVisualizerCanvas(),
     barCount: APP_CONFIG.visualizer.barCount,
+    network: APP_CONFIG.visualizer.network,
   });
 
   let analyser = null;

@@ -6,7 +6,7 @@ Build a reusable web music engine that can run standalone and serve as the audio
 
 ## Current Position
 
-- Stage: 3 - Visualization foundation MVP
+- Stage: 3 - Node network overlay MVP
 - Date: 2026-03-14
 
 ## Completed
@@ -17,12 +17,13 @@ Build a reusable web music engine that can run standalone and serve as the audio
 - Browser bootstrap page and startup pipeline
 - MVP audio analysis pipeline (local file -> playback -> analyser -> band metrics)
 - First integrated canvas visualizer foundation (cosmic signal panel)
+- Node network overlay MVP layer integrated into active visualizer path
 
 ## Active Next
 
-- Tune visual style and motion using browser feedback while keeping module boundaries stable
+- Browser-side tuning for node spacing, link brightness, and energy hierarchy
+- Add the next restrained network enhancement layer (edge-travel accents) without clutter
 - Define visual state contract for future game embedding
-- Plan next additive visual layer (node network + energy links) without replacing current render path
 
 ## Milestones
 

@@ -1,6 +1,6 @@
 export const APP_CONFIG = Object.freeze({
   appName: "VizuPlayer",
-  version: "0.4.0",
+  version: "0.5.0",
   playback: {
     bundledDemoTrackUrl: "./assets/music/little-more-intense-cosmo-puzzle-1.mp3",
   },
@@ -32,5 +32,8 @@ export const APP_CONFIG = Object.freeze({
   },
   visualizer: {
     barCount: 64,
+    network: {
+      nodeRadius: 5.4,
+    },
   },
 });

@@ -39,3 +39,9 @@
   - replaced split analysis loop with one stable render loop for metrics + canvas
   - preserved existing local/demo load paths and transport controls
 - Updated roadmap/state docs to reflect Stage 3 visualization foundation status.
+- Node network overlay MVP pass completed.
+- Activated `src/visual/nodeNetwork.js` with stable network layout, constrained links, glow rendering, and idle/playback animation logic.
+- Integrated node network drawing into active visual path in `src/visual/visualizer.js` while preserving existing spectrum/bar layer.
+- Added modular visualizer network config in `src/core/config.js` and passed config through `src/core/app.js`.
+- Preserved single RAF render loop and existing playback state transitions (`play`, `pause`, `stop`, replace track).
+- Updated project state and roadmap/changelog docs for this pass.

@@ -42,3 +42,14 @@
   - throttled analysis logging
 - Kept local file picker as primary flow and preserved demo/url loading as optional path.
 - Kept playback transport complete with `Play`, `Pause`, and `Stop`.
+
+### Updated (Node Network Overlay MVP Pass)
+
+- Activated `src/visual/nodeNetwork.js` from placeholder to active renderer with:
+  - stable intentional layout
+  - restrained edge graph
+  - idle breathing motion
+  - playback-reactive pulse/line/spark behaviors
+- Integrated network rendering into `src/visual/visualizer.js` without replacing existing spectrum layer.
+- Added visualizer network config in `src/core/config.js` and passed it through `src/core/app.js`.
+- Preserved one stable animation loop and existing playback state behavior.

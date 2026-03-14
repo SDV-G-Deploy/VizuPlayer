@@ -1,3 +1,5 @@
+import { NodeNetwork } from "./nodeNetwork.js";
+
 const ZERO_ANALYSIS = Object.freeze({
   bass: 0,
   mid: 0,
@@ -44,7 +46,7 @@ function createStarField(count) {
 }
 
 export class Visualizer {
-  constructor({ canvas, barCount = 64 }) {
+  constructor({ canvas, barCount = 64, network = {} }) {
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error("Visualizer requires a valid <canvas> element.");
     }
@@ -60,6 +62,7 @@ export class Visualizer {
     this.mappedSpectrum = new Float32Array(this.barCount);
     this.smoothBars = new Float32Array(this.barCount);
     this.starField = createStarField(40);
+    this.nodeNetwork = new NodeNetwork(network);
     this.analysis = { ...ZERO_ANALYSIS };
     this.normalized = normalizeAnalysis(ZERO_ANALYSIS);
     this.isPlaying = false;
@@ -152,6 +155,7 @@ export class Visualizer {
     this.drawGrid(amplitude);
     this.drawSpectrumBars(timestamp, { bass, mid, treble, amplitude });
     this.drawCenterPulse(timestamp, { bass, mid, treble, amplitude });
+    this.drawNodeNetwork(timestamp, { bass, mid, treble, amplitude });
     this.drawPanelFrame(panelGlow);
   }
 
@@ -209,6 +213,16 @@ export class Visualizer {
       ctx.lineTo(x, height);
       ctx.stroke();
     }
+  }
+
+  drawNodeNetwork(timestamp, normalizedAnalysis) {
+    this.nodeNetwork.render(this.ctx, {
+      width: this.width,
+      height: this.height,
+      timestamp,
+      normalizedAnalysis,
+      isPlaying: this.isPlaying,
+    });
   }
 
   drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }) {
@@ -308,4 +322,3 @@ export class Visualizer {
     ctx.strokeRect(8.5, 8.5, width - 17, height - 17);
   }
 }
-
