@@ -1,4 +1,4 @@
-﻿# VizuPlayer
+# VizuPlayer
 
 Reusable web music engine scaffold for browser and web-game integration.
 
@@ -31,22 +31,35 @@ VizuPlayer/
     AGENTS.md
 ```
 
-## Current MVP (Audio Analysis)
+## Current MVP Capabilities
 
 Implemented and working in scope:
 
-- Local audio file selection from disk
-- Play and pause controls
-- Web Audio API analysis pipeline
-- Extracted metrics: `bass`, `mid`, `treble`, `amplitude`
-- Periodic readable console output for validation
-- Demo test track in repo: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
+- Local file loading via browser file picker (`audio/*`) as primary flow
+- Demo/URL track loading for hosted validation (including bundled asset path)
+- Playback controls: `Play`, `Pause`, `Stop`
+- Web Audio analysis pipeline
+- Live on-page numeric metrics:
+  - `bass`
+  - `mid`
+  - `treble`
+  - `amplitude`
+- Throttled structured analysis logging in browser console
 
 Out of scope for this stage:
 
-- Canvas visualizer output
-- Shader/particle systems
+- Advanced visualizer redesign
+- Shader/particle expansion
 - Game integration API
+
+## Runtime Modes
+
+1. GitHub Pages / hosted demo:
+   - Use bundled relative asset path (default input value) or another reachable audio URL
+2. Local user flow:
+   - Use local file picker to load audio from computer via object URL
+
+These modes are both supported but rely on different browser source rules.
 
 ## Local Run Note
 

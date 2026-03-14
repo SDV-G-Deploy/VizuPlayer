@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -23,7 +23,7 @@
     }
 
     .panel {
-      width: min(100%, 760px);
+      width: min(100%, 820px);
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 12px;
@@ -32,26 +32,50 @@
     }
 
     h1 {
-      margin-top: 0;
-      margin-bottom: 10px;
-      font-size: 1.5rem;
+      margin: 0 0 10px;
+      font-size: 1.45rem;
     }
 
     p {
       margin-top: 0;
-      opacity: 0.85;
+      opacity: 0.88;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.78;
     }
 
     .row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 12px;
     }
 
     input[type="file"] {
       width: 100%;
-      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    #track-url-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(0, 0, 0, 0.2);
+      color: inherit;
     }
 
     button {
@@ -69,8 +93,35 @@
     }
 
     #player-status {
-      margin: 0 0 8px;
-      font-weight: 600;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .metric {
+      border: 1px solid rgba(255, 255, 255, 0.17);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .metric-name {
+      display: block;
+      opacity: 0.8;
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 1.25rem;
+      font-family: Consolas, Monaco, monospace;
+      font-weight: 700;
     }
 
     #analysis-output {
@@ -78,26 +129,80 @@
       padding: 10px;
       border-radius: 8px;
       background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       font-family: Consolas, Monaco, monospace;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       white-space: pre-wrap;
+    }
+
+    @media (max-width: 640px) {
+      .analysis-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <main class="panel">
     <h1>VizuPlayer Audio Analysis MVP</h1>
-    <p>Choose a local audio file, then press Play. Analysis values are logged to the browser console.</p>
+    <p>Use Local file as primary input, or load a Demo/URL track for hosted testing.</p>
 
-    <input id="audio-file-input" type="file" accept="audio/*" />
+    <section class="section" aria-label="Local file">
+      <h2>Local File (Primary)</h2>
+      <input id="audio-file-input" type="file" accept="audio/*" />
+      <p class="hint">Select audio from your computer.</p>
+    </section>
 
-    <div class="row">
-      <button id="play-button" disabled>Play</button>
-      <button id="pause-button" disabled>Pause</button>
-    </div>
+    <section class="section" aria-label="Demo URL track">
+      <h2>Demo / URL Track</h2>
+      <div class="row">
+        <input
+          id="track-url-input"
+          type="text"
+          placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+          value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+        />
+      </div>
+      <div class="row" style="margin-top: 8px;">
+        <button id="load-url-button">Load Demo/URL</button>
+        <button id="load-demo-button">Load Bundled Demo</button>
+      </div>
+      <p class="hint">For GitHub Pages, use relative repo paths or direct audio URLs.</p>
+    </section>
 
-    <p id="player-status">Status: waiting for file</p>
-    <pre id="analysis-output">{ "bass": 0, "mid": 0, "treble": 0, "amplitude": 0 }</pre>
+    <section class="section" aria-label="Playback controls">
+      <h2>Playback</h2>
+      <div class="row">
+        <button id="play-button" disabled>Play</button>
+        <button id="pause-button" disabled>Pause</button>
+        <button id="stop-button" disabled>Stop</button>
+      </div>
+    </section>
+
+    <p id="player-status">Status: waiting for track</p>
+
+    <section class="section" aria-label="Live analysis">
+      <h2>Live Analysis</h2>
+      <div class="analysis-grid">
+        <div class="metric">
+          <span class="metric-name">Bass</span>
+          <span id="analysis-bass" class="metric-value">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-name">Mid</span>
+          <span id="analysis-mid" class="metric-value">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-name">Treble</span>
+          <span id="analysis-treble" class="metric-value">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-name">Amplitude</span>
+          <span id="analysis-amplitude" class="metric-value">0</span>
+        </div>
+      </div>
+      <pre id="analysis-output">{ "bass": 0, "mid": 0, "treble": 0, "amplitude": 0 }</pre>
+    </section>
   </main>
 
   <script type="module" src="./src/core/app.js"></script>

@@ -1,4 +1,4 @@
-﻿# ARCHITECTURE
+# ARCHITECTURE
 
 ## Purpose
 
@@ -12,6 +12,7 @@ High-level architecture notes for the VizuPlayer engine.
 ## Current Layering Direction
 
 - Audio engine layer
+- Playback coordination layer
 - Analyser layer
 - UI/player controls layer
 - Visualizer layer (next stage)
@@ -19,22 +20,32 @@ High-level architecture notes for the VizuPlayer engine.
 
 ## Implemented Foundation (Current)
 
-- `audioEngine.js`:
+- `src/audio/audioEngine.js`:
   - owns `AudioContext`
   - owns `HTMLAudioElement`
   - builds stable media source -> analyser -> destination chain
-  - handles local file loading and playback methods
-- `analyser.js`:
-  - owns analyser sampling
+  - loads local `File` sources and demo/url sources
+  - revokes stale object URLs when replacing local tracks
+- `src/audio/musicPlayer.js`:
+  - coordinates load/play/pause/stop state
+  - guards invalid state transitions (play before load)
+- `src/audio/analyser.js`:
+  - samples analyser data each frame
   - computes `bass`, `mid`, `treble`, `amplitude`
-- `app.js`:
-  - wires UI events to engine methods
-  - runs frame loop and periodic structured logging
+- `src/ui/playerUI.js`:
+  - binds DOM controls/events
+  - renders status and live analysis values
+  - updates button enabled/disabled states
+- `src/core/app.js`:
+  - bootstraps all modules
+  - orchestrates event flow and analysis loop lifecycle
+  - emits throttled structured console output
 
 ## Known Constraints
 
 - Browser autoplay restrictions require user gesture before playback
 - `file://` module loading may be restricted; local HTTP serving is preferred
+- External URL tracks may require CORS-compatible hosting for decode/analysis
 
 ## Technical Questions (Next)
 

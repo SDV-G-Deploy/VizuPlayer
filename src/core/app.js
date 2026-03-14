@@ -1,56 +1,50 @@
-﻿import { AudioEngine } from "../audio/audioEngine.js";
+import { AudioEngine } from "../audio/audioEngine.js";
 import { AudioAnalyser } from "../audio/analyser.js";
+import { MusicPlayer } from "../audio/musicPlayer.js";
 import { APP_CONFIG } from "./config.js";
+import { PlayerUI } from "../ui/playerUI.js";
 
-function mustGetElement(id) {
-  const element = document.getElementById(id);
-  if (!element) {
-    throw new Error(`Missing required element: #${id}`);
-  }
+const ZERO_ANALYSIS = Object.freeze({
+  bass: 0,
+  mid: 0,
+  treble: 0,
+  amplitude: 0,
+});
 
-  return element;
+function createConsoleLogger(prefix) {
+  return {
+    info(eventName, payload = null) {
+      if (payload) {
+        console.info(`${prefix} ${eventName}`, payload);
+        return;
+      }
+
+      console.info(`${prefix} ${eventName}`);
+    },
+  };
 }
 
 async function bootstrap() {
-  const fileInput = mustGetElement(APP_CONFIG.ui.fileInputId);
-  const playButton = mustGetElement(APP_CONFIG.ui.playButtonId);
-  const pauseButton = mustGetElement(APP_CONFIG.ui.pauseButtonId);
-  const statusNode = mustGetElement(APP_CONFIG.ui.statusId);
-  const analysisOutput = mustGetElement(APP_CONFIG.ui.analysisOutputId);
-
+  const logger = createConsoleLogger("[VizuPlayer]");
   const audioEngine = new AudioEngine();
-  let analyser = null;
+  const player = new MusicPlayer(audioEngine);
+  const ui = new PlayerUI(APP_CONFIG.ui);
+  ui.initialize(APP_CONFIG.playback.bundledDemoTrackUrl);
 
+  let analyser = null;
   let animationFrameId = null;
   let lastLogTime = 0;
-  let hasLoadedFile = false;
+  let endedListenerAttached = false;
 
-  const setStatus = (message) => {
-    statusNode.textContent = `Status: ${message}`;
-  };
-
-  const updateButtons = () => {
-    playButton.disabled = !hasLoadedFile;
-    pauseButton.disabled = !hasLoadedFile;
-  };
-
-  const renderAnalysis = (values) => {
-    analysisOutput.textContent = JSON.stringify(values, null, 2);
-  };
-
-  const ensureAnalyser = async () => {
-    if (analyser) {
-      return analyser;
-    }
-
-    const graph = await audioEngine.initializeGraph(APP_CONFIG.analyser);
-    analyser = new AudioAnalyser({
-      analyserNode: graph.analyserNode,
-      audioContext: graph.audioContext,
-      bands: APP_CONFIG.analyser.bands,
+  const syncControls = () => {
+    const state = player.getState();
+    ui.setControls({
+      canLoadUrl: true,
+      canLoadDemo: true,
+      canPlay: state.hasTrackLoaded && !state.isPlaying,
+      canPause: state.hasTrackLoaded && state.isPlaying,
+      canStop: state.hasTrackLoaded,
     });
-
-    return analyser;
   };
 
   const stopAnalysisLoop = () => {
@@ -60,15 +54,21 @@ async function bootstrap() {
     }
   };
 
+  const resetAnalysisDisplayIfNoTrack = () => {
+    if (!player.getState().hasTrackLoaded) {
+      ui.renderAnalysis(ZERO_ANALYSIS);
+    }
+  };
+
   const analysisFrame = (timestamp) => {
-    const audioElement = audioEngine.getAudioElement();
-    if (!audioElement || audioElement.paused || audioElement.ended || !analyser) {
+    const state = player.getState();
+    if (!state.isPlaying || !analyser) {
       stopAnalysisLoop();
       return;
     }
 
     const values = analyser.getAnalysis();
-    renderAnalysis(values);
+    ui.renderAnalysis(values);
 
     if (timestamp - lastLogTime >= APP_CONFIG.analyser.logIntervalMs) {
       lastLogTime = timestamp;
@@ -84,63 +84,156 @@ async function bootstrap() {
     }
   };
 
-  fileInput.addEventListener("change", async (event) => {
-    const target = event.target;
-    const file = target.files && target.files[0];
-
-    if (!file) {
-      hasLoadedFile = false;
-      updateButtons();
-      setStatus("waiting for file");
-      renderAnalysis({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
-      return;
+  const ensureAnalyser = async () => {
+    if (analyser) {
+      return analyser;
     }
 
-    try {
-      await audioEngine.loadFile(file, APP_CONFIG.analyser);
-      await ensureAnalyser();
-      hasLoadedFile = true;
-      updateButtons();
-      setStatus(`loaded ${file.name}`);
-      renderAnalysis({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
-    } catch (error) {
-      hasLoadedFile = false;
-      updateButtons();
-      setStatus(error.message);
-      console.error("Failed to load file", error);
-    }
-  });
+    const graph = await audioEngine.initializeGraph(APP_CONFIG.analyser);
 
-  playButton.addEventListener("click", async () => {
-    if (!hasLoadedFile) {
-      setStatus("select file first");
-      return;
+    analyser = new AudioAnalyser({
+      analyserNode: graph.analyserNode,
+      audioContext: graph.audioContext,
+      bands: APP_CONFIG.analyser.bands,
+    });
+
+    if (!endedListenerAttached) {
+      graph.audioElement.addEventListener("ended", () => {
+        player.markEnded();
+        stopAnalysisLoop();
+        ui.setStatus("ended");
+        syncControls();
+        logger.info("playback-ended", { source: audioEngine.getCurrentSource() });
+      });
+
+      endedListenerAttached = true;
     }
 
-    try {
-      await ensureAnalyser();
-      await audioEngine.play();
-      setStatus("playing");
-      startAnalysisLoop();
-    } catch (error) {
-      setStatus(error.message);
-      console.error("Play failed", error);
-    }
-  });
+    return analyser;
+  };
 
-  pauseButton.addEventListener("click", () => {
-    audioEngine.pause();
-    setStatus("paused");
+  const handleTrackLoaded = (statusMessage, logPayload) => {
     stopAnalysisLoop();
+    ui.renderAnalysis(ZERO_ANALYSIS);
+    ui.setStatus(statusMessage);
+    syncControls();
+    logger.info("track-loaded", logPayload);
+  };
+
+  const handleActionFailure = () => {
+    stopAnalysisLoop();
+    syncControls();
+    resetAnalysisDisplayIfNoTrack();
+  };
+
+  ui.bindEvents({
+    onLocalFileSelected: async (file) => {
+      if (!file) {
+        ui.setStatus("no local file selected");
+        syncControls();
+        return;
+      }
+
+      try {
+        await ensureAnalyser();
+        await player.loadLocalFile(file, APP_CONFIG.analyser);
+
+        handleTrackLoaded(`loaded local file: ${file.name}`, {
+          mode: "local",
+          name: file.name,
+          source: audioEngine.getCurrentSource(),
+        });
+      } catch (error) {
+        handleActionFailure();
+        throw error;
+      }
+    },
+
+    onLoadUrlTrack: async (url) => {
+      const trimmedUrl = typeof url === "string" ? url.trim() : "";
+      if (!trimmedUrl) {
+        throw new Error("Enter a demo/url track first.");
+      }
+
+      try {
+        await ensureAnalyser();
+        await player.loadDemoTrack(trimmedUrl, APP_CONFIG.analyser);
+
+        handleTrackLoaded("loaded demo/url track", {
+          mode: "demo-url",
+          url: trimmedUrl,
+          source: audioEngine.getCurrentSource(),
+        });
+      } catch (error) {
+        handleActionFailure();
+        throw error;
+      }
+    },
+
+    onLoadBundledDemoTrack: async () => {
+      const demoUrl = APP_CONFIG.playback.bundledDemoTrackUrl;
+      ui.setTrackUrl(demoUrl);
+
+      try {
+        await ensureAnalyser();
+        await player.loadDemoTrack(demoUrl, APP_CONFIG.analyser);
+
+        handleTrackLoaded("loaded bundled demo track", {
+          mode: "bundled-demo",
+          url: demoUrl,
+          source: audioEngine.getCurrentSource(),
+        });
+      } catch (error) {
+        handleActionFailure();
+        throw error;
+      }
+    },
+
+    onPlay: async () => {
+      try {
+        await ensureAnalyser();
+        await player.play();
+
+        ui.setStatus("playing");
+        syncControls();
+        startAnalysisLoop();
+        logger.info("playback-started", { source: audioEngine.getCurrentSource() });
+      } catch (error) {
+        handleActionFailure();
+        throw error;
+      }
+    },
+
+    onPause: async () => {
+      player.pause();
+      stopAnalysisLoop();
+      ui.setStatus("paused");
+      syncControls();
+      logger.info("playback-paused");
+    },
+
+    onStop: async () => {
+      player.stop();
+      stopAnalysisLoop();
+      ui.renderAnalysis(ZERO_ANALYSIS);
+      ui.setStatus("stopped");
+      syncControls();
+      logger.info("playback-stopped");
+    },
   });
 
-  updateButtons();
+  syncControls();
 
   window.vizuPlayer = {
     config: APP_CONFIG,
     audioEngine,
-    play: () => audioEngine.play(),
-    pause: () => audioEngine.pause(),
+    player,
+    ui,
+    play: () => player.play(),
+    pause: () => player.pause(),
+    stop: () => player.stop(),
+    loadDemoTrack: (url) => player.loadDemoTrack(url, APP_CONFIG.analyser),
+    loadLocalFile: (file) => player.loadLocalFile(file, APP_CONFIG.analyser),
     getAnalysis: () => (analyser ? analyser.getAnalysis() : null),
   };
 }

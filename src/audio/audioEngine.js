@@ -1,4 +1,4 @@
-﻿export class AudioEngine {
+export class AudioEngine {
   constructor() {
     this.audioContext = null;
     this.audioElement = null;
@@ -27,6 +27,7 @@
     if (!this.audioElement) {
       this.audioElement = new Audio();
       this.audioElement.preload = "auto";
+      this.audioElement.crossOrigin = "anonymous";
     }
 
     if (!this.mediaElementSource) {
@@ -60,20 +61,52 @@
     }
 
     await this.initializeGraph(graphOptions);
+    this.stop();
+    this.clearObjectUrl();
 
-    if (this.currentObjectUrl) {
-      URL.revokeObjectURL(this.currentObjectUrl);
-      this.currentObjectUrl = "";
+    const objectUrl = URL.createObjectURL(file);
+    this.currentObjectUrl = objectUrl;
+
+    try {
+      await this.loadSource(objectUrl, "Unable to load selected audio file.");
+    } catch (error) {
+      this.audioElement.removeAttribute("src");
+      this.audioElement.load();
+      this.clearObjectUrl();
+      throw error;
     }
-
-    this.currentObjectUrl = URL.createObjectURL(file);
-    this.audioElement.src = this.currentObjectUrl;
-    this.audioElement.load();
-
-    await this.waitForAudioCanPlay();
   }
 
-  waitForAudioCanPlay() {
+  async loadUrl(url, graphOptions = {}) {
+    const trimmedUrl = typeof url === "string" ? url.trim() : "";
+    if (!trimmedUrl) {
+      throw new Error("Track URL is empty.");
+    }
+
+    await this.initializeGraph(graphOptions);
+    this.stop();
+    this.clearObjectUrl();
+
+    try {
+      await this.loadSource(trimmedUrl, "Unable to load demo/url track.");
+    } catch (error) {
+      this.audioElement.removeAttribute("src");
+      this.audioElement.load();
+      throw error;
+    }
+  }
+
+  async loadSource(sourceUrl, errorMessage) {
+    if (!this.audioElement) {
+      throw new Error("Audio element is not initialized.");
+    }
+
+    this.audioElement.src = sourceUrl;
+    this.audioElement.load();
+    await this.waitForAudioCanPlay(errorMessage);
+  }
+
+  waitForAudioCanPlay(errorMessage = "Unable to load audio source.") {
     if (!this.audioElement) {
       return Promise.reject(new Error("Audio element is not initialized."));
     }
@@ -90,7 +123,7 @@
 
       const onError = () => {
         cleanup();
-        reject(new Error("Unable to load selected audio file."));
+        reject(new Error(errorMessage));
       };
 
       const cleanup = () => {
@@ -105,7 +138,7 @@
 
   async play() {
     if (!this.audioElement || !this.audioElement.src) {
-      throw new Error("No audio file loaded.");
+      throw new Error("Load a local file or demo track first.");
     }
 
     const context = await this.ensureContext();
@@ -122,6 +155,37 @@
     }
 
     this.audioElement.pause();
+  }
+
+  stop() {
+    if (!this.audioElement) {
+      return;
+    }
+
+    this.audioElement.pause();
+
+    try {
+      this.audioElement.currentTime = 0;
+    } catch (error) {
+      // Some stream sources may not allow immediate seek/reset.
+    }
+  }
+
+  clearObjectUrl() {
+    if (!this.currentObjectUrl) {
+      return;
+    }
+
+    URL.revokeObjectURL(this.currentObjectUrl);
+    this.currentObjectUrl = "";
+  }
+
+  getCurrentSource() {
+    if (!this.audioElement) {
+      return "";
+    }
+
+    return this.audioElement.currentSrc || this.audioElement.src || "";
   }
 
   getAudioContext() {

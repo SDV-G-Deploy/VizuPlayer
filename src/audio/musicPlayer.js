@@ -1,69 +1,79 @@
-﻿export class MusicPlayer {
+export class MusicPlayer {
   constructor(audioEngine) {
     this.audioEngine = audioEngine;
-    this.currentSource = null;
-    this.outputNode = null;
-    this.currentTrackUrl = "";
-    this.isPlaying = false;
+    this.resetTrackState();
   }
 
-  connect(node) {
-    this.outputNode = node;
-  }
-
-  async load(url) {
-    if (!url) {
-      throw new Error("Track URL is empty.");
-    }
-
-    await this.stop();
-    this.currentTrackUrl = url;
-    this.currentSource = await this.audioEngine.createSourceFromUrl(url);
-
-    if (this.outputNode) {
-      this.currentSource.connect(this.outputNode);
-    }
-
-    this.currentSource.onended = () => {
+  async loadLocalFile(file, graphOptions = {}) {
+    try {
+      await this.audioEngine.loadFile(file, graphOptions);
+      this.hasTrackLoaded = true;
       this.isPlaying = false;
-    };
+      this.trackType = "local";
+      this.trackLabel = file.name;
+    } catch (error) {
+      this.resetTrackState();
+      throw error;
+    }
+  }
+
+  async loadDemoTrack(url, graphOptions = {}) {
+    try {
+      await this.audioEngine.loadUrl(url, graphOptions);
+      this.hasTrackLoaded = true;
+      this.isPlaying = false;
+      this.trackType = "demo-url";
+      this.trackLabel = url;
+    } catch (error) {
+      this.resetTrackState();
+      throw error;
+    }
   }
 
   async play() {
-    const context = await this.audioEngine.ensureContext();
-    if (context.state === "suspended") {
-      await context.resume();
+    if (!this.hasTrackLoaded) {
+      throw new Error("Load a local file or demo track first.");
     }
 
-    if (!this.currentSource && this.currentTrackUrl) {
-      await this.load(this.currentTrackUrl);
-    }
-
-    if (!this.currentSource) {
-      throw new Error("No track loaded.");
-    }
-
-    this.currentSource.start(0);
+    await this.audioEngine.play();
     this.isPlaying = true;
   }
 
-  async pause() {
-    // BufferSource nodes cannot pause/resume directly, so stop is used for now.
-    await this.stop();
-  }
-
-  async stop() {
-    if (this.currentSource) {
-      try {
-        this.currentSource.stop(0);
-      } catch (error) {
-        // Ignore invalid-state errors when node is already stopped.
-      }
-
-      this.currentSource.disconnect();
-      this.currentSource = null;
+  pause() {
+    if (!this.hasTrackLoaded) {
+      return;
     }
 
+    this.audioEngine.pause();
     this.isPlaying = false;
+  }
+
+  stop() {
+    if (!this.hasTrackLoaded) {
+      return;
+    }
+
+    this.audioEngine.stop();
+    this.isPlaying = false;
+  }
+
+  markEnded() {
+    this.isPlaying = false;
+  }
+
+  resetTrackState() {
+    this.hasTrackLoaded = false;
+    this.isPlaying = false;
+    this.trackType = "none";
+    this.trackLabel = "";
+  }
+
+  getState() {
+    return {
+      hasTrackLoaded: this.hasTrackLoaded,
+      isPlaying: this.isPlaying,
+      trackType: this.trackType,
+      trackLabel: this.trackLabel,
+    };
   }
 }

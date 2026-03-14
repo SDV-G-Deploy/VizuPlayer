@@ -1,42 +1,65 @@
-﻿# PROJECT_STATE
+# PROJECT_STATE
 
 ## Current Focus
 
-Validate the first working audio-analysis pipeline for the reusable web engine foundation.
+Corrective alignment and hardening of the audio-analysis MVP runtime before the next feature stage.
 
 ## Current Stage
 
-- Stage: Audio analysis MVP
+- Stage: Audio analysis MVP hardening pass
 - Date: 2026-03-14
 
-## Implemented in this pass
+## Implemented In This Pass
 
-- Reworked audio path to `HTMLAudioElement` + `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode`
-- Added local file loading from disk via browser file input (`audio/*`)
-- Added basic playback controls (play/pause)
-- Added continuous analysis loop with `requestAnimationFrame`
-- Added extracted metrics: `bass`, `mid`, `treble`, `amplitude`
-- Added readable structured analysis output in UI and browser console
-- Added basic guard rails for no-file and invalid-load states
-- Added demo MP3 asset for testing: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
+- Kept browser-native audio stack: `HTMLAudioElement` + `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode`
+- Made local file selection the primary load path via `<input type="file" accept="audio/*">`
+- Added explicit `Demo / URL Track` loading path for hosted demo validation
+- Added full playback controls: `Play`, `Pause`, `Stop`
+- Exposed always-visible live numeric metrics on-page:
+  - `bass`
+  - `mid`
+  - `treble`
+  - `amplitude`
+- Kept structured analysis output visible in UI (`JSON`) and throttled in console logs
+- Hardened runtime flow for:
+  - play before load
+  - pause/resume
+  - stop/reset
+  - loading a second track after first
+  - avoiding duplicate `requestAnimationFrame` loops
+  - avoiding duplicate `MediaElementAudioSourceNode` creation
+  - revoking stale object URLs when replacing local files
+- Separated responsibilities across modules:
+  - `audioEngine.js` for context/graph/source lifecycle
+  - `musicPlayer.js` for playback/load state coordination
+  - `playerUI.js` for DOM binding + control and analysis rendering
+  - `app.js` for orchestration and loop wiring
 
 ## Working Now
 
-- User can select a local audio file
-- User can play/pause the selected file
-- During playback, analysis values update frame-by-frame
-- Console receives periodic structured analysis logs
-- Repository contains a local demo audio asset for quick validation
+- Local file flow is explicit and primary in UI
+- Demo/bundled track flow remains available and clear for GitHub Pages mode
+- Play/Pause/Stop state transitions are handled through one player state model
+- Analysis values are readable and updating during playback
+- Event logs remain readable while analysis logs are throttled
+
+## Runtime Mode Notes
+
+1. GitHub Pages / hosted demo:
+   - Bundled asset path loading works with repository-relative URLs
+2. Local browser usage:
+   - User file loading works via browser file picker and object URLs
+
+These modes differ in source origin and browser security behavior; they are intentionally both supported.
 
 ## Known Limitations
 
-- No canvas visual output yet (next stage)
-- No playlist/queue system yet
-- No automated browser integration tests yet
-- Running via `file://` may fail in some browsers due module restrictions; local HTTP server is recommended
+- No advanced visualizer redesign in this pass (intentionally out of scope)
+- No automated browser integration tests in CLI
+- Some external URLs may require CORS-compatible hosting to decode/analyse audio in browser
+- `file://` module loading may fail in some browsers; local HTTP server is recommended
 
 ## Next Targets
 
-- Build first minimal canvas visual output driven by current analysis metrics
-- Keep visual layer separated from audio/analyser layer
-- Add simple smoke-test checklist for browser validation
+- Add focused browser smoke-test evidence for key runtime states
+- Move forward to the next visual layer pass without changing core audio loading contract

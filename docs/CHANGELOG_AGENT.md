@@ -1,23 +1,32 @@
-﻿# CHANGELOG_AGENT
+# CHANGELOG_AGENT
 
 ## 2026-03-14
 
-### Added
-
-- Requested project folder layout (`src/audio`, `src/visual`, `src/ui`, `src/core`, `assets/music`, `assets/shaders`, `docs`)
-- Starter files for all requested modules
-- Documentation files in `docs/`
-- Demo MP3 asset for local validation: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
-
 ### Updated
 
-- Governance rule: root `AGENTS.md` is the canonical and continuously updated policy file in local workspace and GitHub `main`.
-- Implemented MVP audio analysis pipeline in core runtime:
-  - file input based local track loading
-  - play/pause controls with user-gesture-safe start
-  - stable Web Audio signal chain with analyser node
-  - bass/mid/treble/amplitude extraction and structured logging
+- Corrected MVP loading UX to support two clear paths:
+  - `Local File (Primary)` via browser file picker
+  - `Demo / URL Track` for hosted/demo validation
+- Added `Stop` control to complete baseline playback flow.
+- Refactored runtime responsibilities to align with intended structure:
+  - `src/audio/audioEngine.js`: context + graph + source lifecycle + object URL revocation
+  - `src/audio/musicPlayer.js`: playback/load state coordination
+  - `src/ui/playerUI.js`: DOM wiring, control state, and analysis display
+  - `src/core/app.js`: orchestration, loop lifecycle, and structured logging
+- Added explicit live metric readouts on page for:
+  - `bass`
+  - `mid`
+  - `treble`
+  - `amplitude`
+- Hardened state transitions and guard rails:
+  - play before load
+  - pause/resume
+  - stop/reset
+  - second-track reload without stale resources
+  - RAF loop deduplication
+  - media source graph reuse safety
 
 ### Notes
 
-- Visual output remains out of scope for this stage and will be implemented next.
+- This pass intentionally avoided major visual redesign and external dependencies.
+- Visualizer expansion remains out of scope until the next stage.

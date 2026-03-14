@@ -1,4 +1,4 @@
-﻿# CHANGELOG
+# CHANGELOG
 
 All notable changes to this project will be documented in this file.
 
@@ -6,18 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Initial documentation scaffold (`README.md`, `AGENTS.md`, `WORKFLOW.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, `CHECKLIST.md`, `CHANGELOG.md`)
-- Local-first workflow rules
-- Baseline project structure with `index.html`, `src/*`, `assets/*`, and `docs/*`
-- Starter module files for audio, visual, UI, and core bootstrapping
-- Demo MP3 asset for local validation: `assets/music/little-more-intense-cosmo-puzzle-1.mp3`
+- Explicit `Demo / URL Track` loading controls alongside local file picker flow
+- `Stop` playback control for baseline transport completeness
+- On-page numeric analysis surface for `bass`, `mid`, `treble`, `amplitude`
 
 ### Updated
 
-- Root `AGENTS.md` declared as canonical policy source and required sync target for local workspace and GitHub.
-- Implemented MVP audio analysis pipeline:
-  - local audio file selection
-  - play/pause playback control
-  - analyser wiring through Web Audio API
-  - extracted bass/mid/treble/amplitude metrics
-  - periodic structured console output for validation
+- Aligned runtime architecture with intended module boundaries:
+  - `audioEngine.js` for graph/source lifecycle
+  - `musicPlayer.js` for playback/load state coordination
+  - `playerUI.js` for DOM bindings and display
+  - `app.js` for orchestration and frame-loop lifecycle
+- Hardened playback/load flow for:
+  - play before load
+  - pause/resume
+  - stop/reset
+  - loading a second track
+- Improved resource safety:
+  - stale object URL revocation on local track replacement
+  - single media source graph creation
+  - single active `requestAnimationFrame` analysis loop
+- Kept console logs structured but throttled to avoid noise

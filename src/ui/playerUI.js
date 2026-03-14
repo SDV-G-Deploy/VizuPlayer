@@ -1,64 +1,136 @@
-﻿export class PlayerUI {
-  constructor({ mountNode, onLoad, onPlay, onPause, onStop }) {
-    this.mountNode = mountNode;
-    this.onLoad = onLoad;
-    this.onPlay = onPlay;
-    this.onPause = onPause;
-    this.onStop = onStop;
-    this.trackInput = null;
-    this.statusNode = null;
+function mustGetElement(id) {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing required element: #${id}`);
   }
 
-  render() {
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = `
-      <label style="display:block;margin-bottom:8px;">Track URL</label>
-      <input id="track-url" type="text" placeholder="./assets/music/sample.mp3" style="width:100%;margin-bottom:10px;padding:8px;" />
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button data-action="load">Load</button>
-        <button data-action="play">Play</button>
-        <button data-action="pause">Pause</button>
-        <button data-action="stop">Stop</button>
-      </div>
-      <p id="player-status" style="margin-top:10px;opacity:0.8;">Idle</p>
-    `;
+  return element;
+}
 
-    this.mountNode.appendChild(wrapper);
-    this.trackInput = wrapper.querySelector("#track-url");
-    this.statusNode = wrapper.querySelector("#player-status");
+export class PlayerUI {
+  constructor(ids) {
+    this.ids = ids;
+    this.fileInput = null;
+    this.trackUrlInput = null;
+    this.loadUrlButton = null;
+    this.loadDemoButton = null;
+    this.playButton = null;
+    this.pauseButton = null;
+    this.stopButton = null;
+    this.statusNode = null;
+    this.analysisBassNode = null;
+    this.analysisMidNode = null;
+    this.analysisTrebleNode = null;
+    this.analysisAmplitudeNode = null;
+    this.analysisOutputNode = null;
+  }
 
-    wrapper.querySelector('[data-action="load"]').addEventListener("click", async () => {
-      try {
-        await this.onLoad(this.trackInput.value.trim());
-        this.setStatus("Track loaded");
-      } catch (error) {
-        this.setStatus(error.message);
-      }
+  initialize(defaultTrackUrl = "") {
+    this.fileInput = mustGetElement(this.ids.fileInputId);
+    this.trackUrlInput = mustGetElement(this.ids.trackUrlInputId);
+    this.loadUrlButton = mustGetElement(this.ids.loadUrlButtonId);
+    this.loadDemoButton = mustGetElement(this.ids.loadDemoButtonId);
+    this.playButton = mustGetElement(this.ids.playButtonId);
+    this.pauseButton = mustGetElement(this.ids.pauseButtonId);
+    this.stopButton = mustGetElement(this.ids.stopButtonId);
+    this.statusNode = mustGetElement(this.ids.statusId);
+    this.analysisBassNode = mustGetElement(this.ids.analysisBassId);
+    this.analysisMidNode = mustGetElement(this.ids.analysisMidId);
+    this.analysisTrebleNode = mustGetElement(this.ids.analysisTrebleId);
+    this.analysisAmplitudeNode = mustGetElement(this.ids.analysisAmplitudeId);
+    this.analysisOutputNode = mustGetElement(this.ids.analysisOutputId);
+
+    this.setTrackUrl(defaultTrackUrl);
+    this.renderAnalysis({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
+    this.setStatus("waiting for track");
+    this.setControls({
+      canLoadUrl: true,
+      canLoadDemo: true,
+      canPlay: false,
+      canPause: false,
+      canStop: false,
+    });
+  }
+
+  bindEvents(handlers) {
+    this.fileInput.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0] ? event.target.files[0] : null;
+      this.runHandler(handlers.onLocalFileSelected, file);
     });
 
-    wrapper.querySelector('[data-action="play"]').addEventListener("click", async () => {
-      try {
-        await this.onPlay();
-        this.setStatus("Playing");
-      } catch (error) {
-        this.setStatus(error.message);
-      }
+    this.loadUrlButton.addEventListener("click", () => {
+      this.runHandler(handlers.onLoadUrlTrack, this.getTrackUrl());
     });
 
-    wrapper.querySelector('[data-action="pause"]').addEventListener("click", async () => {
-      await this.onPause();
-      this.setStatus("Paused");
+    this.loadDemoButton.addEventListener("click", () => {
+      this.runHandler(handlers.onLoadBundledDemoTrack);
     });
 
-    wrapper.querySelector('[data-action="stop"]').addEventListener("click", async () => {
-      await this.onStop();
-      this.setStatus("Stopped");
+    this.playButton.addEventListener("click", () => {
+      this.runHandler(handlers.onPlay);
     });
+
+    this.pauseButton.addEventListener("click", () => {
+      this.runHandler(handlers.onPause);
+    });
+
+    this.stopButton.addEventListener("click", () => {
+      this.runHandler(handlers.onStop);
+    });
+  }
+
+  async runHandler(handler, ...args) {
+    if (typeof handler !== "function") {
+      return;
+    }
+
+    try {
+      await handler(...args);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Action failed.";
+      this.setStatus(message);
+      console.error("[VizuPlayer UI action failed]", error);
+    }
+  }
+
+  getTrackUrl() {
+    return this.trackUrlInput.value.trim();
+  }
+
+  setTrackUrl(url) {
+    this.trackUrlInput.value = typeof url === "string" ? url : "";
   }
 
   setStatus(message) {
-    if (this.statusNode) {
-      this.statusNode.textContent = message;
-    }
+    this.statusNode.textContent = `Status: ${message}`;
+  }
+
+  renderAnalysis(values) {
+    const safeValues = {
+      bass: Number.isFinite(values?.bass) ? values.bass : 0,
+      mid: Number.isFinite(values?.mid) ? values.mid : 0,
+      treble: Number.isFinite(values?.treble) ? values.treble : 0,
+      amplitude: Number.isFinite(values?.amplitude) ? values.amplitude : 0,
+    };
+
+    this.analysisBassNode.textContent = `${safeValues.bass}`;
+    this.analysisMidNode.textContent = `${safeValues.mid}`;
+    this.analysisTrebleNode.textContent = `${safeValues.treble}`;
+    this.analysisAmplitudeNode.textContent = `${safeValues.amplitude}`;
+    this.analysisOutputNode.textContent = JSON.stringify(safeValues, null, 2);
+  }
+
+  setControls({
+    canLoadUrl = true,
+    canLoadDemo = true,
+    canPlay = false,
+    canPause = false,
+    canStop = false,
+  }) {
+    this.loadUrlButton.disabled = !canLoadUrl;
+    this.loadDemoButton.disabled = !canLoadDemo;
+    this.playButton.disabled = !canPlay;
+    this.pauseButton.disabled = !canPause;
+    this.stopButton.disabled = !canStop;
   }
 }
