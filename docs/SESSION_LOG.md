@@ -71,3 +71,8 @@
 - Added analysis log gating config (`APP_CONFIG.analyser.enableLogging`).
 - Ran syntax checks with `node --check` on all touched JS files.
 - Updated state/architecture/changelog docs to reflect real guarantees after hardening.
+
+## 2026-03-14 (Asset Add + Push Follow-up)
+
+- Added audio asset `assets/music/dwarwo2.mp3` to repository history per user request.
+- Prepared follow-up commit after lifecycle hardening commit without amending prior commit.

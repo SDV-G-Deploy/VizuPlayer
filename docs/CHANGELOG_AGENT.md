@@ -70,3 +70,7 @@
   - stop resets metrics/visual input cleanly
 - Added same-file reselection support for local file input after each handled change event.
 - Gated analysis console logging with config flag (`analyser.enableLogging`) to avoid noisy default runtime output.
+
+### Updated (Asset Add + Push Follow-up)
+
+- Added `assets/music/dwarwo2.mp3` to repository as an additional audio/demo asset by request.

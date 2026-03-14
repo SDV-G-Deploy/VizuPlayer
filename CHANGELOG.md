@@ -32,3 +32,7 @@ All notable changes to this project will be documented in this file.
 - Concurrent rapid load requests no longer commit stale results into final runtime state.
 - URL/demo load path no longer hangs indefinitely on unresolved sources.
 - Public API playback/load commands now follow the same orchestrated state path as UI controls.
+
+### Added
+
+- Audio asset `assets/music/dwarwo2.mp3`.
