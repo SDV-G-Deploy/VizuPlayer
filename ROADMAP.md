@@ -48,10 +48,14 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - moved legacy/deep refs (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internals) to unstable debug namespace `window.__VIZUPLAYER_DEBUG__`
   - normalized public command methods to completion/error promises without exposing internal status taxonomy
   - strengthened regression harness with exact facade key checks and forbidden-key guards
+- Debug source-reporting tiny pass (post-accept cleanup):
+  - `AudioEngine.getCurrentSource()` now returns `""` when `src` and `getAttribute("src")` are empty after unload, avoiding stale browser `currentSrc`
+  - added minimal targeted regression check `scripts/regression/unload-source-reporting-regression.mjs`
+  - local validation: targeted regression PASS; command/phase baseline remains `13/13 PASS`
 
 ## Active Next
 
-- Run a repeat independent audit-pass focused on thin-facade contract conformance acceptance (`loadTrack`, `unload`, `getState`, `onStateChange`).
+- Run a focused tiny audit-pass for post-`unload` debug source-reporting consistency (ensure no stale URL leaks from `getCurrentSource()`).
 - Keep the regression harness green as the lifecycle/load baseline safety net.
 
 ## Milestones

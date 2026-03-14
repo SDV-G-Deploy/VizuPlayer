@@ -112,3 +112,13 @@
   - syntax checks via `node --check` on touched JS/MJS files
   - regression harness execution result: `SUMMARY 10/10 passing`
 
+### Updated (Debug Source-Reporting Tiny Fix Pass)
+
+- Patched `src/audio/audioEngine.js#getCurrentSource()` to return `""` when both element `src` and `getAttribute("src")` are empty after unload.
+- This prevents browser-only stale `currentSrc` URL leakage in debug source-reporting while preserving stable runtime/public contract behavior.
+- Added minimal targeted regression check `scripts/regression/unload-source-reporting-regression.mjs` for this exact post-unload edge.
+- Validation completed:
+  - `node --check src/audio/audioEngine.js`
+  - `node --check scripts/regression/unload-source-reporting-regression.mjs`
+  - `node scripts/regression/unload-source-reporting-regression.mjs`
+  - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)

@@ -129,3 +129,14 @@
   - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
 - Scope intentionally held to regression-check layer only; no integration API shaping started in this pass.
 
+## 2026-03-14 (Debug Source-Reporting Tiny Fix Pass)
+
+- Applied a targeted browser-only debug consistency fix in `src/audio/audioEngine.js` without changing stable public facade/API.
+- `getCurrentSource()` now returns `""` when both `audioElement.src` and `audioElement.getAttribute("src")` are empty, so stale browser `currentSrc` is ignored after `unload()`.
+- Added minimal regression script `scripts/regression/unload-source-reporting-regression.mjs` covering only the post-unload source-reporting case.
+- Validation completed:
+  - `node --check src/audio/audioEngine.js`
+  - `node --check scripts/regression/unload-source-reporting-regression.mjs`
+  - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- Local browser repro note: no dedicated local browser repro script for this exact scenario was present in the workspace, so verification was done with a targeted headless regression check.

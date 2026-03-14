@@ -235,7 +235,25 @@ export class AudioEngine {
       return "";
     }
 
-    return this.audioElement.currentSrc || this.audioElement.src || "";
+    const srcAttributeValue = typeof this.audioElement.getAttribute === "function"
+      ? this.audioElement.getAttribute("src")
+      : "";
+    const normalizedAttributeSource = typeof srcAttributeValue === "string"
+      ? srcAttributeValue.trim()
+      : "";
+    const normalizedElementSource = typeof this.audioElement.src === "string"
+      ? this.audioElement.src.trim()
+      : "";
+
+    if (!normalizedElementSource && !normalizedAttributeSource) {
+      return "";
+    }
+
+    const normalizedCurrentSource = typeof this.audioElement.currentSrc === "string"
+      ? this.audioElement.currentSrc.trim()
+      : "";
+
+    return normalizedCurrentSource || normalizedElementSource || normalizedAttributeSource;
   }
 
   getAudioContext() {
@@ -250,3 +268,4 @@ export class AudioEngine {
     return this.analyserNode;
   }
 }
+

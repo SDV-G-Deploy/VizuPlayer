@@ -123,3 +123,18 @@ All notable changes to this project will be documented in this file.
 - `node --check src/core/app.js`
 - `node --check scripts/regression/command-phase-regression.mjs`
 - `node scripts/regression/command-phase-regression.mjs`
+
+### Fixed (Debug Source Reporting Tiny Pass)
+
+- Debug source reporting in `src/audio/audioEngine.js` now returns empty source after `unload()` when both element `src` and attribute `src` are empty, even if browser `currentSrc` is stale.
+
+### Added (Debug Source Reporting Tiny Pass)
+
+- Added targeted regression check `scripts/regression/unload-source-reporting-regression.mjs` for post-unload stale-`currentSrc` browser behavior.
+
+### Validated (Debug Source Reporting Tiny Pass)
+
+- `node --check src/audio/audioEngine.js`
+- `node --check scripts/regression/unload-source-reporting-regression.mjs`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`

@@ -85,3 +85,14 @@ Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pa
   - `node --check scripts/regression/command-phase-regression.mjs`
   - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
 
+## 2026-03-14 Update (Debug Source-Reporting Tiny Fix Pass)
+
+- Implemented a narrow debug consistency patch in `src/audio/audioEngine.js` to avoid stale source reporting after `unload()`.
+- `getCurrentSource()` now treats empty `src` + empty `getAttribute("src")` as canonical unloaded state and returns `""` instead of stale `currentSrc`.
+- Added focused regression coverage at `scripts/regression/unload-source-reporting-regression.mjs` for the post-unload stale-URL edge only.
+- Stable contract scope preserved: no changes to `window.vizuPlayer`, stable facade surface, phase model, orchestration shape, or UI features.
+- Validation completed:
+  - `node --check src/audio/audioEngine.js`
+  - `node --check scripts/regression/unload-source-reporting-regression.mjs`
+  - `node scripts/regression/unload-source-reporting-regression.mjs`
+  - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
