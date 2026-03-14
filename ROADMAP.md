@@ -1,4 +1,4 @@
-# ROADMAP
+﻿# ROADMAP
 
 ## Vision
 
@@ -58,14 +58,22 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - re-semantized node network: less amplitude-led visibility, stronger mid-led structure/flow, bass-led body weight, rarer treble spark accents
   - constrained implementation to `src/visual/visualizer.js` and `src/visual/nodeNetwork.js`
   - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
+- Cosmic Beauty Reframe broad beauty-pass:
+  - rebuilt the scene in `src/visual/visualizer.js` into a five-layer depth stack (void backdrop, distant haze/dust, mid-field energy currents + plasma network, dominant layered cosmic core, selective foreground shards)
+  - replaced bottom-widget spectrum semantics with an integrated orbital spectrum corona tied to the core object
+  - removed schematic panel/grid feel and shifted motion language toward continuous drift/flow with selective highlights
+  - rebuilt `src/visual/nodeNetwork.js` from a sparse fixed diagram into a denser adaptive plasma topology with curved links, flow drift, and traveling pulse accents
+  - reframed `index.html` shell styling to support hero visual dominance and stronger composition cohesion while preserving all JS-bound DOM ids
+  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
 
 ## Active Next
 
-- Execute manual visual validation on 4 target scenarios:
+- Execute manual visual validation of the Cosmic Beauty Reframe on 4 target scenarios:
   - bass-heavy track
   - mid-rich / vocal / synth-rich track
   - treble-bright track
   - pause / resume behavior
+- Capture any targeted follow-up tuning notes only after track-by-track visual review.
 - Keep the regression harness green as the lifecycle/load baseline safety net.
 
 ## Milestones
@@ -75,3 +83,4 @@ Build a reusable web music engine that can run standalone and serve as the audio
 - M3: Visualization and timing sync basics
 - M4: Integration API for game clients
 - M5: Hardening and packaging
+

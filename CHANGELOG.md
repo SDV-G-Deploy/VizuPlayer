@@ -189,3 +189,25 @@ All notable changes to this project will be documented in this file.
 - `node --check src/visual/nodeNetwork.js`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+
+### Changed (Cosmic Beauty Reframe Pass)
+
+- Rebuilt `src/visual/visualizer.js` as a broad, layered cosmic composition pass:
+  - replaced panel-like grid semantics with deep-space depth layering (void backdrop, drifting haze, multi-depth dust, mid-field energy currents, selective foreground shards)
+  - rebuilt the center hero into a larger layered cosmic core (aura body, rotating shells, filament turbulence, controlled singularity highlight) to remove the prior white-blob read
+  - integrated spectrum bars into an orbital `spectrum corona` around the core instead of a detached bottom/side widget read
+  - shifted glow handling to hierarchical contrast discipline (localized white-hot accents, restrained global wash)
+- Rebuilt `src/visual/nodeNetwork.js` from a sparse fixed diagram into an adaptive plasma structure:
+  - expanded node field density and topology complexity using adaptive nearest/echo connection generation
+  - replaced straight graph lines with flowing curved filaments and traveling pulse accents
+  - upgraded motion language from mostly static jitter to continuous flow/orbital drift aligned to scene energy
+- Reframed `index.html` visual shell styling to support the new hero composition:
+  - stronger hero-stage framing and atmospheric shell gradients
+  - reduced side-panel visual competition while preserving all JS-bound ids/runtime wiring
+
+### Validated (Cosmic Beauty Reframe Pass)
+
+- `node --check src/visual/visualizer.js`
+- `node --check src/visual/nodeNetwork.js`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`

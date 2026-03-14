@@ -1,36 +1,9 @@
-const ZERO_NORMALIZED = Object.freeze({
+﻿const ZERO_NORMALIZED = Object.freeze({
   bass: 0,
   mid: 0,
   treble: 0,
   amplitude: 0,
 });
-
-const DEFAULT_LAYOUT = Object.freeze([
-  { x: 0.5, y: 0.36, weight: 1.45, drift: 1.15, phase: 0.2, accent: true },
-  { x: 0.34, y: 0.3, weight: 1.1, drift: 0.95, phase: 1.1, accent: false },
-  { x: 0.66, y: 0.3, weight: 1.1, drift: 0.95, phase: 2.4, accent: false },
-  { x: 0.24, y: 0.44, weight: 0.9, drift: 0.85, phase: 3.2, accent: true },
-  { x: 0.76, y: 0.44, weight: 0.9, drift: 0.85, phase: 4.3, accent: true },
-  { x: 0.39, y: 0.55, weight: 1, drift: 0.9, phase: 5, accent: false },
-  { x: 0.61, y: 0.55, weight: 1, drift: 0.9, phase: 5.8, accent: false },
-  { x: 0.5, y: 0.22, weight: 0.82, drift: 0.75, phase: 0.9, accent: true },
-]);
-
-const DEFAULT_CONNECTIONS = Object.freeze([
-  [0, 1, 1],
-  [0, 2, 1],
-  [0, 5, 0.95],
-  [0, 6, 0.95],
-  [1, 2, 0.75],
-  [1, 3, 0.85],
-  [2, 4, 0.85],
-  [1, 5, 0.72],
-  [2, 6, 0.72],
-  [5, 6, 0.8],
-  [7, 0, 0.68],
-  [7, 1, 0.7],
-  [7, 2, 0.7],
-]);
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -53,31 +26,105 @@ function normalizeAnalysis(analysis) {
   };
 }
 
+function distanceSquared(a, b) {
+  const dx = toNumber(a?.x) - toNumber(b?.x);
+  const dy = toNumber(a?.y) - toNumber(b?.y);
+  return dx * dx + dy * dy;
+}
+
+function createDefaultLayout() {
+  const layout = [
+    {
+      x: 0.5,
+      y: 0.44,
+      weight: 1.55,
+      drift: 0.45,
+      phase: 0.08,
+      accent: true,
+      anchor: true,
+      depth: 1.08,
+    },
+  ];
+
+  const innerCount = 8;
+  for (let index = 0; index < innerCount; index += 1) {
+    const angle = (index / innerCount) * Math.PI * 2 - Math.PI * 0.5;
+    const wobble = Math.sin((index + 1) * 1.37) * 0.012;
+    layout.push({
+      x: 0.5 + Math.cos(angle) * (0.155 + wobble * 0.5),
+      y: 0.44 + Math.sin(angle) * (0.118 + wobble),
+      weight: 1.02 + (index % 2 === 0 ? 0.08 : -0.04),
+      drift: 0.82 + (index % 3) * 0.12,
+      phase: 0.4 + index * 0.68,
+      accent: index % 2 === 0,
+      depth: 0.98 + (index % 3) * 0.05,
+    });
+  }
+
+  const outerCount = 12;
+  for (let index = 0; index < outerCount; index += 1) {
+    const angle = (index / outerCount) * Math.PI * 2 - Math.PI * 0.45;
+    const radiusX = 0.294 + Math.sin(index * 0.9) * 0.018;
+    const radiusY = 0.212 + Math.cos(index * 0.85) * 0.016;
+    layout.push({
+      x: 0.5 + Math.cos(angle) * radiusX,
+      y: 0.44 + Math.sin(angle) * radiusY,
+      weight: 0.84 + ((index + 1) % 4) * 0.07,
+      drift: 1 + (index % 4) * 0.14,
+      phase: 0.9 + index * 0.54,
+      accent: index % 4 === 0,
+      depth: 0.74 + (index % 5) * 0.06,
+    });
+  }
+
+  const veilCount = 6;
+  for (let index = 0; index < veilCount; index += 1) {
+    const factor = veilCount <= 1 ? 0 : index / (veilCount - 1);
+    layout.push({
+      x: 0.24 + factor * 0.52 + Math.sin(index * 1.4) * 0.014,
+      y: 0.66 + Math.sin(index * 0.8) * 0.025,
+      weight: 0.76 + (index % 3) * 0.08,
+      drift: 1.12 + (index % 2) * 0.18,
+      phase: 0.5 + index * 0.74,
+      accent: index === 0 || index === veilCount - 1,
+      depth: 0.66 + index * 0.04,
+    });
+  }
+
+  return layout;
+}
+
+const DEFAULT_LAYOUT = Object.freeze(createDefaultLayout());
+
 function createNodeRuntime(node, index, nodeRadius) {
   const seed = (Math.sin((index + 1) * 2.17) + 1) * 0.5;
+  const depth = clamp(toNumber(node.depth) || (0.72 + seed * 0.52), 0.55, 1.28);
 
   return {
     nx: clamp(toNumber(node.x), 0.08, 0.92),
-    ny: clamp(toNumber(node.y), 0.12, 0.78),
-    weight: clamp(toNumber(node.weight) || 1, 0.65, 1.8),
-    drift: clamp(toNumber(node.drift) || 1, 0.45, 1.6),
-    phase: toNumber(node.phase) || index * 0.8,
+    ny: clamp(toNumber(node.y), 0.12, 0.88),
+    weight: clamp(toNumber(node.weight) || 1, 0.55, 1.9),
+    drift: clamp(toNumber(node.drift) || 1, 0.3, 1.9),
+    phase: toNumber(node.phase) || index * 0.75,
     accent: Boolean(node.accent),
-    motionX: 0.7 + seed * 0.8,
-    motionY: 0.7 + (1 - seed) * 0.8,
-    motionSpeedX: 0.00055 + seed * 0.00032,
-    motionSpeedY: 0.00045 + (1 - seed) * 0.00034,
-    pulseSpeed: 0.0034 + seed * 0.0019,
+    anchor: Boolean(node.anchor),
+    depth,
+    motionX: 0.7 + seed * 0.9,
+    motionY: 0.7 + (1 - seed) * 0.9,
+    flowJitter: 0.00054 + seed * 0.00036,
+    orbitRadius: 2.2 + seed * 7.8,
+    orbitSpeed: 0.00022 + (1 - seed) * 0.00024,
+    pulseSpeed: 0.0024 + seed * 0.0018,
     x: 0,
     y: 0,
-    radius: nodeRadius,
-    coreAlpha: 0.35,
+    radius: nodeRadius * depth,
+    coreAlpha: 0.3,
     spark: 0,
   };
 }
 
 function normalizeLayout(layout) {
-  if (!Array.isArray(layout) || layout.length < 6) {
+  if (!Array.isArray(layout) || layout.length < 10) {
     return DEFAULT_LAYOUT;
   }
 
@@ -100,71 +147,132 @@ function parseConnection(entry) {
   return null;
 }
 
-function normalizeConnections(connections, nodeCount) {
-  const source = Array.isArray(connections) && connections.length > 0 ? connections : DEFAULT_CONNECTIONS;
+function buildAdaptiveConnections(layout) {
+  const nodeCount = layout.length;
   const uniquePairs = new Set();
-  const result = [];
+  const connections = [];
 
-  for (let index = 0; index < source.length; index += 1) {
-    const parsed = parseConnection(source[index]);
-    if (!parsed) {
-      continue;
-    }
-
-    const from = Math.floor(toNumber(parsed.from));
-    const to = Math.floor(toNumber(parsed.to));
+  const addConnection = (from, to, weight) => {
     if (from < 0 || to < 0 || from >= nodeCount || to >= nodeCount || from === to) {
-      continue;
+      return;
     }
 
     const key = from < to ? `${from}-${to}` : `${to}-${from}`;
     if (uniquePairs.has(key)) {
-      continue;
+      return;
     }
 
     uniquePairs.add(key);
-    result.push({
-      from,
-      to,
-      weight: clamp(toNumber(parsed.weight) || 0.8, 0.45, 1.4),
-      phase: index * 0.93 + 0.27,
-      index: result.length,
-    });
+    connections.push({ from, to, weight: clamp(weight, 0.45, 1.35) });
+  };
+
+  for (let index = 0; index < nodeCount; index += 1) {
+    const distances = [];
+
+    for (let candidate = 0; candidate < nodeCount; candidate += 1) {
+      if (candidate === index) {
+        continue;
+      }
+
+      distances.push({
+        to: candidate,
+        distance: Math.sqrt(distanceSquared(layout[index], layout[candidate])),
+      });
+    }
+
+    distances.sort((left, right) => left.distance - right.distance);
+
+    const nearestCount = index === 0 ? Math.min(10, nodeCount - 1) : Math.min(3, nodeCount - 1);
+    for (let nearest = 0; nearest < nearestCount; nearest += 1) {
+      const entry = distances[nearest];
+      if (!entry) {
+        continue;
+      }
+
+      const weight = 1.28 - entry.distance * 2.4;
+      addConnection(index, entry.to, weight);
+    }
+
+    if (index > 0 && nodeCount > 6 && index % 2 === 0) {
+      const echo = ((index + Math.ceil(nodeCount / 3)) % (nodeCount - 1)) + 1;
+      const distance = Math.sqrt(distanceSquared(layout[index], layout[echo]));
+      addConnection(index, echo, 1.05 - distance * 1.9);
+    }
   }
 
-  if (result.length > 0) {
-    return result;
+  return connections.map((connection, index) => ({
+    ...connection,
+    phase: index * 0.71 + 0.37,
+    pulseSpeed: 0.00035 + (index % 5) * 0.00008,
+    index,
+  }));
+}
+
+function normalizeConnections(connections, layout) {
+  const nodeCount = layout.length;
+  const uniquePairs = new Set();
+  const parsedConnections = [];
+
+  if (Array.isArray(connections) && connections.length > 0) {
+    for (let index = 0; index < connections.length; index += 1) {
+      const parsed = parseConnection(connections[index]);
+      if (!parsed) {
+        continue;
+      }
+
+      const from = Math.floor(toNumber(parsed.from));
+      const to = Math.floor(toNumber(parsed.to));
+      if (from < 0 || to < 0 || from >= nodeCount || to >= nodeCount || from === to) {
+        continue;
+      }
+
+      const key = from < to ? `${from}-${to}` : `${to}-${from}`;
+      if (uniquePairs.has(key)) {
+        continue;
+      }
+
+      uniquePairs.add(key);
+      parsedConnections.push({
+        from,
+        to,
+        weight: clamp(toNumber(parsed.weight) || 0.8, 0.45, 1.35),
+        phase: index * 0.71 + 0.37,
+        pulseSpeed: 0.00035 + (index % 5) * 0.00008,
+        index: parsedConnections.length,
+      });
+    }
   }
 
-  const fallback = [];
-  for (let index = 0; index < nodeCount - 1; index += 1) {
-    fallback.push({
-      from: index,
-      to: index + 1,
-      weight: 0.8,
-      phase: index * 0.9,
-      index,
-    });
+  if (parsedConnections.length > 0) {
+    return parsedConnections;
   }
 
-  return fallback;
+  return buildAdaptiveConnections(layout);
+}
+
+function quadraticPointAt(t, x1, y1, cx, cy, x2, y2) {
+  const oneMinusT = 1 - t;
+  const px = oneMinusT * oneMinusT * x1 + 2 * oneMinusT * t * cx + t * t * x2;
+  const py = oneMinusT * oneMinusT * y1 + 2 * oneMinusT * t * cy + t * t * y2;
+  return { x: px, y: py };
 }
 
 export class NodeNetwork {
-  constructor({ layout = DEFAULT_LAYOUT, connections = DEFAULT_CONNECTIONS, nodeRadius = 5.4 } = {}) {
+  constructor({ layout = DEFAULT_LAYOUT, connections = null, nodeRadius = 5.4 } = {}) {
     const safeLayout = normalizeLayout(layout);
-    const safeRadius = clamp(toNumber(nodeRadius) || 5.4, 3.5, 12);
+    const safeRadius = clamp(toNumber(nodeRadius) || 5.4, 3.2, 11.5);
 
     this.nodeRadius = safeRadius;
     this.nodes = safeLayout.map((node, index) => createNodeRuntime(node, index, safeRadius));
-    this.connections = normalizeConnections(connections, this.nodes.length);
+    this.connections = normalizeConnections(connections, safeLayout);
     this.energy = {
       bass: 0.1,
       mid: 0.12,
       treble: 0.08,
-      amplitude: 0.12,
+      amplitude: 0.1,
+      flow: 0.18,
     };
-    this.visibility = 0.28;
+    this.visibility = 0.24;
   }
 
   render(
@@ -175,6 +283,7 @@ export class NodeNetwork {
       timestamp = 0,
       normalizedAnalysis = ZERO_NORMALIZED,
       isPlaying = false,
+      coreAnchor = null,
     } = {},
   ) {
     if (!ctx || width <= 0 || height <= 0 || this.nodes.length === 0) {
@@ -183,104 +292,169 @@ export class NodeNetwork {
 
     const analysis = normalizeAnalysis(normalizedAnalysis);
     this.updateEnergy(analysis, timestamp, isPlaying);
-    this.updateNodes(width, height, timestamp, isPlaying);
+    this.updateNodes(width, height, timestamp, isPlaying, coreAnchor);
     this.drawConnections(ctx, timestamp, isPlaying);
     this.drawNodes(ctx, timestamp);
   }
 
   updateEnergy(analysis, timestamp, isPlaying) {
-    const idleBreath = 0.08 + Math.sin(timestamp * 0.00062) * 0.025;
+    const idleBreath = 0.08 + Math.sin(timestamp * 0.00064) * 0.028;
     const targets = isPlaying
       ? analysis
       : {
-          bass: idleBreath * 0.65,
-          mid: idleBreath * 0.75,
-          treble: 0.04 + Math.sin(timestamp * 0.0009 + 1.4) * 0.02,
-          amplitude: 0.06 + Math.sin(timestamp * 0.00056 + 0.8) * 0.025,
+          bass: idleBreath * 0.62,
+          mid: idleBreath * 0.76,
+          treble: 0.04 + Math.sin(timestamp * 0.0009 + 1.2) * 0.018,
+          amplitude: 0.05 + Math.sin(timestamp * 0.00054 + 0.7) * 0.02,
         };
-    const smoothing = isPlaying ? 0.18 : 0.04;
+    const smoothing = isPlaying ? 0.16 : 0.045;
 
     this.energy.bass = lerp(this.energy.bass, targets.bass, smoothing);
     this.energy.mid = lerp(this.energy.mid, targets.mid, smoothing);
     this.energy.treble = lerp(this.energy.treble, targets.treble, smoothing);
     this.energy.amplitude = lerp(this.energy.amplitude, targets.amplitude, smoothing * 0.9);
 
-    const targetVisibility = clamp(
-      0.16 + this.energy.mid * 0.34 + this.energy.bass * 0.1 + this.energy.amplitude * 0.12,
+    const targetFlow = clamp(
+      0.2 + targets.mid * 0.58 + targets.treble * 0.28 + (isPlaying ? targets.amplitude * 0.18 : 0),
       0.12,
-      0.64,
+      1,
+    );
+    this.energy.flow = lerp(this.energy.flow, targetFlow, isPlaying ? 0.14 : 0.05);
+
+    const targetVisibility = clamp(
+      0.17 + this.energy.mid * 0.42 + this.energy.bass * 0.18 + this.energy.amplitude * 0.1,
+      0.14,
+      0.78,
     );
     this.visibility = lerp(this.visibility, targetVisibility, isPlaying ? 0.14 : 0.05);
   }
 
-  updateNodes(width, height, timestamp, isPlaying) {
-    const motionScale = Math.min(width, height) / 220;
+  updateNodes(width, height, timestamp, isPlaying, coreAnchor) {
+    const motionScale = Math.min(width, height) / 190;
+    const centerX = Number.isFinite(coreAnchor?.x) ? coreAnchor.x : width * 0.5;
+    const centerY = Number.isFinite(coreAnchor?.y) ? coreAnchor.y : height * 0.44;
+    const shiftX = centerX - width * 0.5;
+    const shiftY = centerY - height * 0.44;
 
     for (const node of this.nodes) {
-      const motionGain = isPlaying ? 0.76 + this.energy.mid * 0.94 : 0.5 + this.energy.mid * 0.3;
-      const offsetX =
-        Math.sin(timestamp * node.motionSpeedX + node.phase) * node.drift * node.motionX * motionGain;
-      const offsetY =
-        Math.cos(timestamp * node.motionSpeedY + node.phase * 1.13) *
-        node.drift *
-        node.motionY *
-        motionGain;
+      const baseX = node.nx * width + shiftX * (0.44 + node.depth * 0.54);
+      const baseY = node.ny * height + shiftY * (0.44 + node.depth * 0.46);
+      const orbitalGain = (isPlaying ? 1.05 : 0.72) + this.energy.flow * 0.55;
+      const orbitAngle = timestamp * node.orbitSpeed * (isPlaying ? 1.2 : 0.72) + node.phase;
+      const orbitX =
+        Math.cos(orbitAngle)
+        * node.orbitRadius
+        * motionScale
+        * orbitalGain
+        * (0.8 + node.motionX * 0.4);
+      const orbitY =
+        Math.sin(orbitAngle * 1.18 + node.phase * 0.5)
+        * node.orbitRadius
+        * motionScale
+        * (0.56 + this.energy.mid * 0.4)
+        * (0.82 + node.motionY * 0.3);
+      const flowX =
+        Math.sin(timestamp * node.flowJitter + node.phase * 1.9)
+        * node.drift
+        * motionScale
+        * (0.68 + this.energy.mid * 1.1);
+      const flowY =
+        Math.cos(timestamp * (node.flowJitter * 0.86) + node.phase * 1.3)
+        * node.drift
+        * motionScale
+        * (0.58 + this.energy.mid * 0.92);
 
-      node.x = node.nx * width + offsetX * motionScale;
-      node.y = node.ny * height + offsetY * motionScale;
+      const freeX = baseX + orbitX + flowX;
+      const freeY = baseY + orbitY + flowY;
+
+      if (node.anchor) {
+        const anchorPull = clamp(0.72 + this.energy.mid * 0.12, 0.72, 0.9);
+        const anchorX = centerX + Math.cos(orbitAngle * 1.5) * motionScale * 1.8;
+        const anchorY = centerY + Math.sin(orbitAngle * 1.35) * motionScale * 1.4;
+        node.x = lerp(freeX, anchorX, anchorPull);
+        node.y = lerp(freeY, anchorY, anchorPull);
+      } else {
+        node.x = freeX;
+        node.y = freeY;
+      }
 
       const pulseWave = 0.5 + 0.5 * Math.sin(timestamp * node.pulseSpeed + node.phase * 2.4);
-      const bassPulse = this.energy.bass * (0.46 + node.weight * 0.52);
-      const ampPulse = this.energy.amplitude * 0.09;
-      const breathingPulse = isPlaying ? pulseWave * (0.085 + this.energy.mid * 0.035) : pulseWave * 0.04;
-      node.radius = this.nodeRadius * node.weight * (1 + bassPulse + ampPulse + breathingPulse);
-      node.coreAlpha = clamp(0.2 + this.visibility * 0.34 + this.energy.mid * 0.08 + pulseWave * 0.04, 0.16, 0.72);
+      const bassMass = this.energy.bass * (0.34 + node.weight * 0.48);
+      const midBreath = pulseWave * (0.08 + this.energy.mid * 0.08);
+      const ampEnvelope = this.energy.amplitude * 0.08;
+      node.radius = this.nodeRadius * node.weight * node.depth * (1 + bassMass + midBreath + ampEnvelope);
+      node.coreAlpha = clamp(0.14 + this.visibility * 0.5 + this.energy.mid * 0.12 + pulseWave * 0.06, 0.12, 0.9);
       node.spark = node.accent
-        ? clamp((this.energy.treble - 0.16) * (0.22 + pulseWave * 0.5), 0, 0.62)
+        ? clamp((this.energy.treble - 0.2) * (0.32 + pulseWave * 0.68), 0, 0.78)
         : 0;
     }
   }
 
   drawConnections(ctx, timestamp, isPlaying) {
-    const lineBase = 0.06 + this.energy.mid * 0.3 + this.energy.bass * 0.06 + this.energy.amplitude * 0.06;
-    const glowAlpha = clamp((0.02 + this.energy.mid * 0.12 + this.energy.treble * 0.04) * this.visibility, 0.015, 0.18);
+    const lineBase = 0.03 + this.energy.mid * 0.34 + this.energy.bass * 0.07 + this.energy.amplitude * 0.08;
 
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.shadowColor = `rgba(88, 201, 252, ${glowAlpha})`;
-    ctx.shadowBlur = 1.8 + this.energy.mid * 3 + this.energy.amplitude * 1.2;
+    ctx.shadowColor = `rgba(102, 225, 255, ${0.03 + this.energy.mid * 0.1 + this.energy.flow * 0.04})`;
+    ctx.shadowBlur = 1.6 + this.energy.mid * 4.4 + this.energy.flow * 2;
 
     for (const connection of this.connections) {
       const from = this.nodes[connection.from];
       const to = this.nodes[connection.to];
-
       if (!from || !to) {
         continue;
       }
 
-      const breath = 0.86 + 0.14 * Math.sin(timestamp * 0.001 + connection.phase);
-      const canFlicker = isPlaying && this.energy.treble > 0.34 && connection.index % 5 === 0;
-      const flicker = canFlicker
-        ? (0.012 + this.energy.treble * 0.045) *
-          (0.5 + 0.5 * Math.sin(timestamp * 0.011 + connection.phase * 6))
-        : 0;
-      const alpha = clamp((lineBase * breath + flicker) * this.visibility, 0.016, 0.34);
-      const width = 0.5 + connection.weight * 0.52 + this.energy.mid * 0.5 + this.energy.bass * 0.1;
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 1) {
+        continue;
+      }
 
-      ctx.strokeStyle = `rgba(68, 154, 232, ${alpha * 0.34})`;
-      ctx.lineWidth = width + 0.85;
+      const normalX = -dy / distance;
+      const normalY = dx / distance;
+      const wave = 0.5 + 0.5 * Math.sin(timestamp * 0.0008 + connection.phase);
+      let curvature =
+        distance
+        * (0.045 + connection.weight * 0.08)
+        * (0.66 + wave * 0.55 + this.energy.mid * 0.28);
+
+      if (connection.index % 2 === 0) {
+        curvature *= -1;
+      }
+
+      const controlX = (from.x + to.x) * 0.5 + normalX * curvature;
+      const controlY = (from.y + to.y) * 0.5 + normalY * curvature;
+      const alpha = clamp((lineBase * connection.weight * (0.82 + wave * 0.24)) * this.visibility, 0.015, 0.46);
+      const width = 0.42 + connection.weight * 0.74 + this.energy.mid * 0.58;
+
+      ctx.strokeStyle = `rgba(32, 118, 204, ${alpha * 0.36})`;
+      ctx.lineWidth = width + 1.15;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
+      ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
       ctx.stroke();
 
-      ctx.strokeStyle = `rgba(156, 226, 255, ${alpha * 0.84})`;
+      ctx.strokeStyle = `rgba(156, 236, 255, ${alpha * 0.9})`;
       ctx.lineWidth = width;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
+      ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
       ctx.stroke();
+
+      if (isPlaying && (connection.index % 4 === 0 || this.energy.treble > 0.62)) {
+        const travel = (timestamp * connection.pulseSpeed + connection.phase * 0.1) % 1;
+        const pulse = quadraticPointAt(travel, from.x, from.y, controlX, controlY, to.x, to.y);
+        const glow = 0.08 + this.energy.treble * 0.18;
+        const radius = 0.6 + this.energy.treble * 1.3;
+
+        ctx.fillStyle = `rgba(220, 249, 255, ${glow})`;
+        ctx.beginPath();
+        ctx.arc(pulse.x, pulse.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     ctx.restore();
@@ -290,27 +464,39 @@ export class NodeNetwork {
     ctx.save();
 
     for (const node of this.nodes) {
-      const haloRadius = node.radius * (1.5 + this.energy.mid * 0.45 + this.energy.amplitude * 0.18);
+      const haloRadius = node.radius * (1.76 + this.energy.mid * 0.62 + this.energy.amplitude * 0.24);
       const halo = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, haloRadius);
-      halo.addColorStop(0, `rgba(116, 236, 255, ${clamp(node.coreAlpha * 0.24 + this.energy.mid * 0.04, 0.035, 0.28)})`);
-      halo.addColorStop(0.65, `rgba(74, 165, 236, ${clamp(node.coreAlpha * 0.09 + this.energy.mid * 0.025, 0.018, 0.14)})`);
-      halo.addColorStop(1, "rgba(26, 68, 126, 0)");
+      halo.addColorStop(0, `rgba(104, 233, 255, ${clamp(node.coreAlpha * 0.24 + this.energy.mid * 0.05, 0.03, 0.32)})`);
+      halo.addColorStop(0.62, `rgba(58, 166, 236, ${clamp(node.coreAlpha * 0.11 + this.energy.mid * 0.03, 0.015, 0.16)})`);
+      halo.addColorStop(1, "rgba(18, 58, 124, 0)");
       ctx.fillStyle = halo;
       ctx.beginPath();
       ctx.arc(node.x, node.y, haloRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.shadowColor = `rgba(118, 224, 255, ${0.08 + node.coreAlpha * 0.2})`;
-      ctx.shadowBlur = 2.2 + node.radius * 0.72 + this.energy.mid * 1.6 + this.energy.amplitude * 0.8;
-      ctx.fillStyle = `rgba(185, 244, 255, ${clamp(node.coreAlpha + this.energy.bass * 0.06, 0.2, 0.76)})`;
+      const core = ctx.createRadialGradient(
+        node.x - node.radius * 0.22,
+        node.y - node.radius * 0.2,
+        node.radius * 0.12,
+        node.x,
+        node.y,
+        node.radius * 1.12,
+      );
+      core.addColorStop(0, `rgba(230, 251, 255, ${clamp(node.coreAlpha * 0.85 + this.energy.bass * 0.08, 0.24, 0.92)})`);
+      core.addColorStop(0.55, `rgba(118, 220, 255, ${clamp(node.coreAlpha * 0.44 + this.energy.mid * 0.08, 0.16, 0.66)})`);
+      core.addColorStop(1, "rgba(34, 116, 196, 0)");
+
+      ctx.shadowColor = `rgba(126, 230, 255, ${0.05 + node.coreAlpha * 0.2})`;
+      ctx.shadowBlur = 1.8 + node.radius * 0.8 + this.energy.mid * 2.2;
+      ctx.fillStyle = core;
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, node.radius * 1.08, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.fillStyle = `rgba(18, 60, 110, ${0.38 + node.coreAlpha * 0.15})`;
+      ctx.fillStyle = `rgba(8, 38, 84, ${0.32 + node.coreAlpha * 0.16})`;
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius * 0.42, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, node.radius * 0.38, 0, Math.PI * 2);
       ctx.fill();
 
       if (node.spark > 0.16) {
@@ -322,22 +508,28 @@ export class NodeNetwork {
   }
 
   drawTrebleAccent(ctx, node, timestamp) {
-    const arcRadius = node.radius * (1.28 + node.spark * 0.36);
-    const arcStart = timestamp * 0.003 + node.phase;
-    const arcSweep = Math.PI * (0.26 + node.spark * 0.42);
-    const arcEnd = arcStart + arcSweep;
+    const arcRadius = node.radius * (1.35 + node.spark * 0.42);
+    const arcStart = timestamp * 0.0036 + node.phase;
+    const arcSweep = Math.PI * (0.22 + node.spark * 0.44);
 
-    ctx.strokeStyle = `rgba(210, 245, 255, ${0.08 + node.spark * 0.28})`;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(220, 248, 255, ${0.09 + node.spark * 0.3})`;
+    ctx.lineWidth = 0.9 + node.spark * 0.5;
     ctx.beginPath();
-    ctx.arc(node.x, node.y, arcRadius, arcStart, arcEnd);
+    ctx.arc(node.x, node.y, arcRadius, arcStart, arcStart + arcSweep);
     ctx.stroke();
 
-    const tipX = node.x + Math.cos(arcEnd) * arcRadius;
-    const tipY = node.y + Math.sin(arcEnd) * arcRadius;
-    ctx.fillStyle = `rgba(220, 252, 255, ${0.12 + node.spark * 0.3})`;
+    ctx.strokeStyle = `rgba(140, 230, 255, ${0.07 + node.spark * 0.2})`;
+    ctx.lineWidth = 0.72;
     ctx.beginPath();
-    ctx.arc(tipX, tipY, 0.7 + node.spark * 0.8, 0, Math.PI * 2);
+    ctx.arc(node.x, node.y, arcRadius * 0.9, arcStart + Math.PI, arcStart + Math.PI + arcSweep * 0.8);
+    ctx.stroke();
+
+    const tipAngle = arcStart + arcSweep;
+    const tipX = node.x + Math.cos(tipAngle) * arcRadius;
+    const tipY = node.y + Math.sin(tipAngle) * arcRadius;
+    ctx.fillStyle = `rgba(236, 252, 255, ${0.16 + node.spark * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, 0.68 + node.spark * 0.85, 0, Math.PI * 2);
     ctx.fill();
   }
 }

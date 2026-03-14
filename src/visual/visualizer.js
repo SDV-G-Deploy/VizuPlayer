@@ -1,4 +1,4 @@
-import { NodeNetwork } from "./nodeNetwork.js";
+﻿import { NodeNetwork } from "./nodeNetwork.js";
 
 const ZERO_ANALYSIS = Object.freeze({
   bass: 0,
@@ -28,21 +28,43 @@ function normalizeAnalysis(analysis) {
   };
 }
 
-function createStarField(count) {
-  const stars = [];
+function wrapUnit(value) {
+  const wrapped = value % 1;
+  return wrapped < 0 ? wrapped + 1 : wrapped;
+}
+
+function createDustField(
+  count,
+  {
+    radiusMin = 0.35,
+    radiusMax = 1.8,
+    alphaMin = 0.03,
+    alphaMax = 0.26,
+    driftMin = 0.0006,
+    driftMax = 0.003,
+    speedMin = 0.00007,
+    speedMax = 0.00028,
+  } = {},
+) {
+  const field = [];
 
   for (let index = 0; index < count; index += 1) {
-    stars.push({
+    field.push({
       x: Math.random(),
       y: Math.random(),
-      radius: 0.4 + Math.random() * 1.4,
+      radius: radiusMin + Math.random() * (radiusMax - radiusMin),
+      alpha: alphaMin + Math.random() * (alphaMax - alphaMin),
+      twinkle: 0.6 + Math.random() * 1.4,
+      speed: speedMin + Math.random() * (speedMax - speedMin),
+      driftX: driftMin + Math.random() * (driftMax - driftMin),
+      driftY: driftMin + Math.random() * (driftMax - driftMin),
       phase: Math.random() * Math.PI * 2,
-      speed: 0.35 + Math.random() * 1.25,
-      alpha: 0.15 + Math.random() * 0.45,
+      tone: Math.random(),
+      depth: 0.48 + Math.random() * 0.9,
     });
   }
 
-  return stars;
+  return field;
 }
 
 export class Visualizer {
@@ -61,7 +83,36 @@ export class Visualizer {
     this.barCount = Math.max(24, Math.floor(barCount));
     this.mappedSpectrum = new Float32Array(this.barCount);
     this.smoothBars = new Float32Array(this.barCount);
-    this.starField = createStarField(28);
+    this.deepDust = createDustField(96, {
+      radiusMin: 0.25,
+      radiusMax: 1.15,
+      alphaMin: 0.018,
+      alphaMax: 0.11,
+      driftMin: 0.0004,
+      driftMax: 0.0018,
+      speedMin: 0.00004,
+      speedMax: 0.00015,
+    });
+    this.midDust = createDustField(56, {
+      radiusMin: 0.45,
+      radiusMax: 1.9,
+      alphaMin: 0.035,
+      alphaMax: 0.2,
+      driftMin: 0.0007,
+      driftMax: 0.0028,
+      speedMin: 0.00008,
+      speedMax: 0.00026,
+    });
+    this.foregroundShards = createDustField(24, {
+      radiusMin: 0.8,
+      radiusMax: 2.2,
+      alphaMin: 0.05,
+      alphaMax: 0.3,
+      driftMin: 0.0008,
+      driftMax: 0.0032,
+      speedMin: 0.0001,
+      speedMax: 0.00034,
+    });
     this.nodeNetwork = new NodeNetwork(network);
     this.analysis = { ...ZERO_ANALYSIS };
     this.normalized = normalizeAnalysis(ZERO_ANALYSIS);
@@ -132,281 +183,511 @@ export class Visualizer {
     }
   }
 
+  getCoreAnchor(timestamp, structureLevel = 0, envelope = 0) {
+    const driftX = Math.sin(timestamp * 0.00019 + structureLevel * 2.4) * this.width * (0.008 + envelope * 0.01);
+    const driftY =
+      Math.cos(timestamp * 0.00016 + structureLevel * 1.7) * this.height * (0.006 + envelope * 0.008);
+
+    return {
+      x: this.width * 0.5 + driftX,
+      y: this.height * 0.44 + driftY,
+    };
+  }
+
   render(timestamp = 0) {
     this.resize();
 
-    const { ctx, width, height } = this;
     const bass = this.normalized.bass;
     const mid = this.normalized.mid;
     const treble = this.normalized.treble;
     const amplitude = this.normalized.amplitude;
-    const envelope = this.isPlaying ? 0.2 + amplitude * 0.34 : 0.08 + amplitude * 0.08;
-    const massLevel = clamp(
-      (this.isPlaying ? 0.14 : 0.08) + bass * 0.54 + amplitude * 0.08,
-      0.08,
-      0.92,
-    );
-    const structureLevel = clamp(
-      (this.isPlaying ? 0.18 : 0.1) + mid * 0.5 + amplitude * 0.06,
-      0.1,
-      0.9,
-    );
-    const sparkleLevel = clamp(
-      (this.isPlaying ? 0.07 : 0.04) + treble * 0.64 + amplitude * 0.04,
-      0.04,
-      0.95,
-    );
+    const envelope = this.isPlaying ? 0.2 + amplitude * 0.4 : 0.08 + amplitude * 0.1;
+    const massLevel = clamp((this.isPlaying ? 0.16 : 0.09) + bass * 0.62 + amplitude * 0.08, 0.09, 0.95);
+    const structureLevel = clamp((this.isPlaying ? 0.2 : 0.11) + mid * 0.56 + amplitude * 0.08, 0.11, 0.94);
+    const sparkleLevel = clamp((this.isPlaying ? 0.08 : 0.04) + treble * 0.67 + amplitude * 0.05, 0.04, 0.98);
     const ambientLevel = clamp(
-      (this.isPlaying ? 0.12 : 0.08) + mid * 0.2 + bass * 0.12 + amplitude * 0.08,
-      0.08,
-      0.7,
+      (this.isPlaying ? 0.14 : 0.09) + mid * 0.24 + bass * 0.15 + amplitude * 0.09,
+      0.09,
+      0.75,
     );
-    const panelGlow = 0.1 + ambientLevel * 0.26 + structureLevel * 0.06;
+    const anchor = this.getCoreAnchor(timestamp, structureLevel, envelope);
 
-    const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height);
-    backgroundGradient.addColorStop(
-      0,
-      `rgba(6, 16, 36, ${0.96 + ambientLevel * 0.025 + envelope * 0.01})`,
-    );
-    backgroundGradient.addColorStop(0.55, "rgba(4, 10, 24, 0.98)");
-    backgroundGradient.addColorStop(1, "rgba(2, 6, 14, 1)");
-
-    ctx.fillStyle = backgroundGradient;
-    ctx.fillRect(0, 0, width, height);
-
-    this.drawNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope });
-    this.drawStarField(timestamp, { treble, amplitude, sparkleLevel, envelope });
-    this.drawGrid(structureLevel, ambientLevel);
-    this.drawCenterPulse(
+    this.drawVoidBackdrop({ ambientLevel, structureLevel, envelope }, anchor);
+    this.drawDistantNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope }, anchor);
+    this.drawDustField(timestamp, this.deepDust, { ambientLevel, sparkleLevel, envelope }, anchor, 0.65);
+    this.drawDustField(timestamp, this.midDust, { ambientLevel, sparkleLevel, envelope }, anchor, 1);
+    this.drawEnergyCurrents(
       timestamp,
       { bass, mid, treble, amplitude },
       { massLevel, structureLevel, sparkleLevel, envelope },
+      anchor,
     );
-    this.drawNodeNetwork(timestamp, { bass, mid, treble, amplitude });
-    this.drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, { structureLevel, envelope });
-    this.drawPanelFrame(panelGlow, structureLevel);
+    this.drawNodeNetwork(timestamp, { bass, mid, treble, amplitude }, anchor);
+    this.drawSpectrumCorona(
+      timestamp,
+      { bass, mid, treble, amplitude },
+      { massLevel, structureLevel, sparkleLevel, envelope },
+      anchor,
+    );
+    this.drawCosmicCore(
+      timestamp,
+      { bass, mid, treble, amplitude },
+      { massLevel, structureLevel, sparkleLevel, envelope },
+      anchor,
+    );
+    this.drawForegroundShards(timestamp, { structureLevel, sparkleLevel, envelope }, anchor);
+    this.drawPanelFrame({ structureLevel, ambientLevel, envelope });
   }
 
-  drawNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope }) {
+  drawVoidBackdrop({ ambientLevel, structureLevel, envelope }, anchor) {
     const { ctx, width, height } = this;
-    const driftX = Math.sin(timestamp * 0.00016) * width * 0.024;
-    const driftY = Math.cos(timestamp * 0.0002) * height * 0.018;
-    const centerX = width * 0.5 + driftX;
-    const centerY = height * 0.5 + driftY;
-    const radius = Math.max(width, height) * (0.58 + massLevel * 0.12 + structureLevel * 0.04);
+    const background = ctx.createLinearGradient(0, 0, 0, height);
+    background.addColorStop(0, `rgba(2, 8, 24, ${0.97 + ambientLevel * 0.02})`);
+    background.addColorStop(0.46, `rgba(2, 6, 17, ${0.985 + structureLevel * 0.01})`);
+    background.addColorStop(1, "rgba(0, 2, 10, 1)");
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, width, height);
 
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-    gradient.addColorStop(
-      0,
-      `rgba(22, 76, 146, ${0.065 + ambientLevel * 0.07 + structureLevel * 0.08 + envelope * 0.025})`,
-    );
-    gradient.addColorStop(
-      0.55,
-      `rgba(10, 34, 78, ${0.028 + ambientLevel * 0.035 + structureLevel * 0.045 + envelope * 0.014})`,
-    );
-    gradient.addColorStop(1, "rgba(6, 12, 26, 0)");
+    const centerLift = ctx.createRadialGradient(anchor.x, anchor.y, height * 0.08, anchor.x, anchor.y, Math.max(width, height) * 0.76);
+    centerLift.addColorStop(0, `rgba(16, 44, 98, ${0.1 + ambientLevel * 0.14 + envelope * 0.04})`);
+    centerLift.addColorStop(0.56, `rgba(6, 18, 52, ${0.05 + ambientLevel * 0.08 + structureLevel * 0.04})`);
+    centerLift.addColorStop(1, "rgba(1, 4, 15, 0)");
+    ctx.fillStyle = centerLift;
+    ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = gradient;
+    const vignette = ctx.createRadialGradient(anchor.x, anchor.y, Math.min(width, height) * 0.24, anchor.x, anchor.y, Math.max(width, height) * 0.95);
+    vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+    vignette.addColorStop(0.72, `rgba(0, 0, 0, ${0.2 + ambientLevel * 0.08})`);
+    vignette.addColorStop(1, "rgba(0, 0, 0, 0.72)");
+    ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, width, height);
   }
 
-  drawStarField(timestamp, { treble, amplitude, sparkleLevel, envelope }) {
-    const { ctx, width, height, starField } = this;
-    const sparkleGain = this.isPlaying
-      ? 0.12 + sparkleLevel * 0.4 + treble * 0.18 + envelope * 0.05
-      : 0.06 + sparkleLevel * 0.16;
+  drawDistantNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope }, anchor) {
+    const { ctx, width, height } = this;
+    const largestSide = Math.max(width, height);
+    const lobes = [
+      {
+        offsetX: -0.24,
+        offsetY: -0.18,
+        radius: 0.74,
+        color: [44, 106, 196],
+        alpha: 0.04 + ambientLevel * 0.09 + structureLevel * 0.03,
+      },
+      {
+        offsetX: 0.28,
+        offsetY: -0.1,
+        radius: 0.64,
+        color: [32, 124, 184],
+        alpha: 0.032 + ambientLevel * 0.07 + massLevel * 0.03,
+      },
+      {
+        offsetX: 0.06,
+        offsetY: 0.22,
+        radius: 0.7,
+        color: [24, 88, 152],
+        alpha: 0.026 + ambientLevel * 0.065 + structureLevel * 0.02,
+      },
+    ];
 
-    for (const star of starField) {
-      const pulse = 0.55 + 0.45 * Math.sin(timestamp * 0.0012 * star.speed + star.phase);
+    for (let index = 0; index < lobes.length; index += 1) {
+      const lobe = lobes[index];
+      const driftX = Math.sin(timestamp * (0.00007 + index * 0.000015) + index * 1.4) * width * 0.02;
+      const driftY = Math.cos(timestamp * (0.00006 + index * 0.000013) + index * 0.8) * height * 0.017;
+      const x = anchor.x + width * lobe.offsetX + driftX;
+      const y = anchor.y + height * lobe.offsetY + driftY;
+      const radius = largestSide * (lobe.radius + massLevel * 0.07 + envelope * 0.03);
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, `rgba(${lobe.color[0]}, ${lobe.color[1]}, ${lobe.color[2]}, ${lobe.alpha})`);
+      gradient.addColorStop(0.58, `rgba(${Math.round(lobe.color[0] * 0.62)}, ${Math.round(lobe.color[1] * 0.62)}, ${Math.round(lobe.color[2] * 0.62)}, ${lobe.alpha * 0.48})`);
+      gradient.addColorStop(1, "rgba(10, 24, 58, 0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
+
+  drawDustField(timestamp, field, { ambientLevel, sparkleLevel, envelope }, anchor, layerGain = 1) {
+    const { ctx, width, height } = this;
+    const anchorShiftX = (anchor.x / width - 0.5) * 0.018 * layerGain;
+    const anchorShiftY = (anchor.y / height - 0.44) * 0.022 * layerGain;
+
+    for (const particle of field) {
+      const driftTime = timestamp * particle.speed;
+      const x =
+        wrapUnit(
+          particle.x
+            + Math.cos(driftTime + particle.phase) * particle.driftX * layerGain
+            + anchorShiftX * particle.depth,
+        ) * width;
+      const y =
+        wrapUnit(
+          particle.y
+            + Math.sin(driftTime * 1.15 + particle.phase * 0.82) * particle.driftY * layerGain
+            + anchorShiftY * particle.depth,
+        ) * height;
+      const twinkle = 0.45 + 0.55 * Math.sin(timestamp * 0.0018 * particle.twinkle + particle.phase);
       const alpha = clamp(
-        star.alpha * pulse * sparkleGain + treble * 0.012 + amplitude * 0.005,
-        0.012,
+        particle.alpha
+          * twinkle
+          * (0.32 + ambientLevel * 0.9 + sparkleLevel * 0.32 + envelope * 0.24)
+          * (this.isPlaying ? 1 : 0.72),
+        0.008,
         0.38,
       );
-      ctx.fillStyle = `rgba(178, 230, 255, ${alpha})`;
+      const red = 104 + Math.round(particle.tone * 62);
+      const green = 176 + Math.round(particle.tone * 58);
+      const blue = 246 + Math.round(particle.tone * 9);
+
+      ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${alpha})`;
       ctx.beginPath();
-      ctx.arc(star.x * width, star.y * height, star.radius, 0, Math.PI * 2);
+      ctx.arc(x, y, particle.radius * particle.depth * layerGain, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  drawGrid(structureLevel, ambientLevel) {
+  drawEnergyCurrents(
+    timestamp,
+    { bass, mid, treble, amplitude },
+    { massLevel, structureLevel, sparkleLevel, envelope },
+    anchor,
+  ) {
     const { ctx, width, height } = this;
-    const rows = 6;
-    const columns = 8;
+    const baseRadius = Math.min(width, height) * (0.19 + massLevel * 0.08);
 
-    ctx.strokeStyle = `rgba(110, 180, 255, ${0.012 + structureLevel * 0.045 + ambientLevel * 0.014})`;
-    ctx.lineWidth = 0.85;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
 
-    for (let row = 1; row < rows; row += 1) {
-      const y = (height / rows) * row;
+    for (let index = 0; index < 7; index += 1) {
+      const direction = index % 2 === 0 ? 1 : -1;
+      const orbit = timestamp * (0.00016 + index * 0.000018) * direction;
+      const sweep = Math.PI * (0.38 + structureLevel * 0.28 + (index % 3) * 0.06);
+      const start = orbit + index * 0.62;
+      const radiusX = baseRadius * (1.32 + index * 0.19 + structureLevel * 0.16);
+      const radiusY = radiusX * (0.46 + index * 0.022);
+      const glowAlpha = 0.015 + structureLevel * 0.095 + massLevel * 0.04 + envelope * 0.025;
+
+      ctx.shadowColor = `rgba(94, 218, 255, ${0.018 + structureLevel * 0.09 + sparkleLevel * 0.04})`;
+      ctx.shadowBlur = 1.6 + structureLevel * 4.8 + envelope * 3;
+      ctx.strokeStyle = `rgba(40, 136, 224, ${glowAlpha * (0.75 + index * 0.08)})`;
+      ctx.lineWidth = 0.86 + index * 0.12 + structureLevel * 0.8;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
+      ctx.ellipse(anchor.x, anchor.y, radiusX, radiusY, start * 0.32, start, start + sweep);
+      ctx.stroke();
+
+      ctx.strokeStyle = `rgba(170, 240, 255, ${0.015 + sparkleLevel * 0.085 + envelope * 0.025 + treble * 0.02})`;
+      ctx.lineWidth = 0.72 + structureLevel * 0.62 + bass * 0.18 + mid * 0.1 + amplitude * 0.08;
+      ctx.beginPath();
+      ctx.ellipse(
+        anchor.x,
+        anchor.y,
+        radiusX * 0.986,
+        radiusY * 0.986,
+        start * 0.32,
+        start + sweep * 0.24,
+        start + sweep * 0.6,
+      );
       ctx.stroke();
     }
 
-    for (let column = 1; column < columns; column += 1) {
-      const x = (width / columns) * column;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
+    ctx.restore();
   }
 
-  drawNodeNetwork(timestamp, normalizedAnalysis) {
+  drawNodeNetwork(timestamp, normalizedAnalysis, anchor) {
     this.nodeNetwork.render(this.ctx, {
       width: this.width,
       height: this.height,
       timestamp,
       normalizedAnalysis,
       isPlaying: this.isPlaying,
+      coreAnchor: anchor,
     });
   }
 
-  drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, { structureLevel, envelope }) {
+  drawSpectrumCorona(
+    timestamp,
+    { bass, mid, treble, amplitude },
+    { massLevel, structureLevel, sparkleLevel, envelope },
+    anchor,
+  ) {
     const { ctx, width, height } = this;
-    const horizontalPadding = 18;
-    const baseY = height - 24;
-    const topLimit = 28;
-    const drawHeight = Math.max(40, baseY - topLimit);
-    const gap = 2;
-    const usableWidth = width - horizontalPadding * 2;
-    const barWidth = Math.max(2, (usableWidth - gap * (this.barCount - 1)) / this.barCount);
+    const sweep = Math.PI * 1.88;
+    const startAngle = -Math.PI * 0.94 + Math.sin(timestamp * 0.00026) * 0.06;
+    const coronaRadius = Math.min(width, height) * (0.26 + massLevel * 0.09);
+    const radialScale = Math.min(width, height) * (0.12 + structureLevel * 0.09);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     for (let index = 0; index < this.barCount; index += 1) {
       const zone = index / (this.barCount - 1);
       let zoneGain = 1;
 
-      if (zone < 0.33) {
-        zoneGain += bass * 0.88;
+      if (zone < 0.34) {
+        zoneGain += bass * 0.9;
       } else if (zone < 0.67) {
-        zoneGain += mid * 0.78;
+        zoneGain += mid * 0.82;
       } else {
-        zoneGain += treble * 0.84;
+        zoneGain += treble * 0.88;
       }
 
       const shimmer = this.isPlaying
-        ? 0.5 + 0.5 * Math.sin(timestamp * 0.018 + index * 0.85 + treble * 2.7)
-        : 0.25 + 0.15 * Math.sin(timestamp * 0.003 + index * 0.25);
+        ? 0.5 + 0.5 * Math.sin(timestamp * 0.018 + index * 0.84 + treble * 2.5)
+        : 0.35 + 0.2 * Math.sin(timestamp * 0.003 + index * 0.22);
       const idleWave = this.isPlaying
-        ? 0.008
-        : 0.004 + 0.01 * (Math.sin(timestamp * 0.0018 + index * 0.22) * 0.5 + 0.5);
-      const trebleFlicker = zone > 0.67 ? treble * shimmer * (0.11 + envelope * 0.06) : 0;
-      const target = clamp(this.mappedSpectrum[index] * zoneGain + idleWave + trebleFlicker, 0, 1.02);
-      const smoothing = this.isPlaying ? 0.2 + treble * 0.1 : 0.07;
+        ? 0.006
+        : 0.0035 + 0.009 * (Math.sin(timestamp * 0.0015 + index * 0.24) * 0.5 + 0.5);
+      const trebleFlicker = zone > 0.66 ? treble * shimmer * (0.12 + envelope * 0.07) : 0;
+      const target = clamp(this.mappedSpectrum[index] * zoneGain + idleWave + trebleFlicker, 0, 1.08);
+      const smoothing = this.isPlaying ? 0.22 + treble * 0.1 : 0.08;
+
       this.smoothBars[index] = lerp(this.smoothBars[index], target, smoothing);
 
-      const roleLift = zone < 0.33 ? bass : zone < 0.67 ? mid : treble;
-      const barHeight = Math.max(
-        2,
-        this.smoothBars[index] * drawHeight * (0.54 + roleLift * 0.23 + amplitude * 0.08 + envelope * 0.05),
-      );
-      const x = horizontalPadding + index * (barWidth + gap);
-      const y = baseY - barHeight;
+      const roleLift = zone < 0.34 ? bass : zone < 0.67 ? mid : treble;
+      const barLength =
+        this.smoothBars[index]
+        * radialScale
+        * (0.58 + roleLift * 0.32 + amplitude * 0.1 + envelope * 0.12);
+      const innerRadius = coronaRadius * (1.08 + structureLevel * 0.14);
+      const angleJitter = Math.sin(timestamp * 0.00094 + index * 0.42) * (this.isPlaying ? 0.018 : 0.01);
+      const angle = startAngle + zone * sweep + angleJitter;
+      const outerRadius = innerRadius + barLength + (2 + roleLift * 4.2);
+      const startX = anchor.x + Math.cos(angle) * innerRadius;
+      const startY = anchor.y + Math.sin(angle) * innerRadius;
+      const endX = anchor.x + Math.cos(angle) * outerRadius;
+      const endY = anchor.y + Math.sin(angle) * outerRadius;
+      const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
 
-      const gradient = ctx.createLinearGradient(0, y, 0, baseY);
-      gradient.addColorStop(0, `rgba(152, 238, 255, ${0.46 + roleLift * 0.12 + envelope * 0.06})`);
-      gradient.addColorStop(0.5, `rgba(72, 174, 255, ${0.28 + roleLift * 0.1 + envelope * 0.04})`);
-      gradient.addColorStop(1, "rgba(20, 70, 140, 0.24)");
+      gradient.addColorStop(0, `rgba(32, 92, 168, ${0.1 + roleLift * 0.09 + envelope * 0.03})`);
+      gradient.addColorStop(0.64, `rgba(90, 202, 252, ${0.19 + roleLift * 0.2 + envelope * 0.08})`);
+      gradient.addColorStop(1, `rgba(238, 251, 255, ${0.14 + sparkleLevel * 0.24 + roleLift * 0.13})`);
 
-      ctx.shadowColor = `rgba(99, 218, 255, ${0.035 + roleLift * 0.08 + envelope * 0.08})`;
-      ctx.shadowBlur = 2 + roleLift * 1.8 + envelope * 2.4;
-      ctx.fillStyle = gradient;
-      ctx.fillRect(x, y, barWidth, barHeight);
-      ctx.shadowBlur = 0;
-    }
-
-    ctx.strokeStyle = `rgba(142, 205, 255, ${0.15 + structureLevel * 0.09 + envelope * 0.04})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(horizontalPadding - 4, baseY + 0.5);
-    ctx.lineTo(width - horizontalPadding + 4, baseY + 0.5);
-    ctx.stroke();
-  }
-
-  drawCenterPulse(
-    timestamp,
-    { bass, mid, treble, amplitude },
-    { massLevel, structureLevel, sparkleLevel, envelope },
-  ) {
-    const { ctx, width, height } = this;
-    const pulse = this.isPlaying ? Math.sin(timestamp * 0.0038 + bass * 7.2) : Math.sin(timestamp * 0.0014);
-    const centerX = width * 0.5;
-    const centerY = height * 0.42;
-    const radius = height * (0.082 + bass * 0.1 + amplitude * 0.03 + pulse * 0.013);
-
-    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.45);
-    halo.addColorStop(
-      0,
-      `rgba(70, 208, 255, ${0.045 + mid * 0.13 + structureLevel * 0.06 + envelope * 0.02})`,
-    );
-    halo.addColorStop(0.58, `rgba(34, 118, 192, ${0.024 + mid * 0.09 + envelope * 0.02})`);
-    halo.addColorStop(1, "rgba(16, 38, 84, 0)");
-    ctx.fillStyle = halo;
-    ctx.fillRect(0, 0, width, height);
-
-    const coreBody = ctx.createRadialGradient(centerX, centerY, radius * 0.08, centerX, centerY, radius * 1.08);
-    coreBody.addColorStop(
-      0,
-      `rgba(136, 235, 255, ${0.16 + mid * 0.16 + structureLevel * 0.06 + massLevel * 0.03})`,
-    );
-    coreBody.addColorStop(0.62, `rgba(58, 164, 230, ${0.09 + bass * 0.1 + envelope * 0.03})`);
-    coreBody.addColorStop(1, "rgba(24, 80, 148, 0)");
-    ctx.fillStyle = coreBody;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 1.08, 0, Math.PI * 2);
-    ctx.fill();
-
-    const brightCoreRadius = radius * (0.26 + treble * 0.22 + sparkleLevel * 0.06);
-    const brightCore = ctx.createRadialGradient(
-      centerX,
-      centerY,
-      brightCoreRadius * 0.08,
-      centerX,
-      centerY,
-      brightCoreRadius * 1.9,
-    );
-    brightCore.addColorStop(0, `rgba(245, 253, 255, ${0.44 + treble * 0.38})`);
-    brightCore.addColorStop(0.5, `rgba(186, 241, 255, ${0.2 + treble * 0.24 + envelope * 0.04})`);
-    brightCore.addColorStop(1, "rgba(140, 220, 255, 0)");
-    ctx.fillStyle = brightCore;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, brightCoreRadius * 1.9, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.32 + treble * 0.34 + envelope * 0.06})`;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, brightCoreRadius * 0.42, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (sparkleLevel < 0.14) {
-      return;
-    }
-
-    const arcRadius = radius * (0.9 + treble * 0.22);
-    const arcSweep = Math.PI * (0.18 + treble * 0.16);
-    const arcStart = timestamp * 0.0045 + treble * 1.8;
-    ctx.strokeStyle = `rgba(223, 248, 255, ${0.06 + treble * 0.2})`;
-    ctx.lineWidth = 0.8 + treble * 0.8;
-
-    for (let index = 0; index < 2; index += 1) {
-      const phase = arcStart + index * Math.PI;
+      ctx.shadowColor = `rgba(112, 228, 255, ${0.03 + roleLift * 0.1 + envelope * 0.1})`;
+      ctx.shadowBlur = 2 + roleLift * 2.6 + sparkleLevel * 3.2 + envelope * 2.5;
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 0.95 + roleLift * 1.1 + envelope * 0.55;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, arcRadius, phase, phase + arcSweep);
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
       ctx.stroke();
     }
+
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(96, 198, 247, ${0.08 + structureLevel * 0.11 + envelope * 0.05})`;
+    ctx.lineWidth = 1.15;
+    ctx.beginPath();
+    ctx.arc(anchor.x, anchor.y, coronaRadius * (1.09 + structureLevel * 0.1), startAngle, startAngle + sweep);
+    ctx.stroke();
+
+    ctx.strokeStyle = `rgba(186, 236, 255, ${0.04 + sparkleLevel * 0.12 + envelope * 0.035})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(
+      anchor.x,
+      anchor.y,
+      coronaRadius * (1.18 + structureLevel * 0.12),
+      startAngle + sweep * 0.15,
+      startAngle + sweep * 0.84,
+    );
+    ctx.stroke();
+
+    ctx.restore();
   }
 
-  drawPanelFrame(panelGlow, structureLevel) {
+  drawCosmicCore(
+    timestamp,
+    { bass, mid, treble },
+    { massLevel, structureLevel, sparkleLevel, envelope },
+    anchor,
+  ) {
     const { ctx, width, height } = this;
-    ctx.strokeStyle = `rgba(116, 206, 255, ${0.18 + panelGlow * 0.1})`;
-    ctx.lineWidth = 1.2;
+    const pulse = this.isPlaying ? Math.sin(timestamp * 0.0037 + bass * 7.1) : Math.sin(timestamp * 0.0016 + 0.8);
+    const coreRadius = Math.min(width, height) * (0.122 + massLevel * 0.13 + envelope * 0.034 + pulse * 0.012);
+    const auraRadius = coreRadius * (3.2 + structureLevel * 0.74 + envelope * 0.2);
+
+    const aura = ctx.createRadialGradient(anchor.x, anchor.y, coreRadius * 0.16, anchor.x, anchor.y, auraRadius);
+    aura.addColorStop(0, `rgba(74, 210, 255, ${0.1 + structureLevel * 0.16 + sparkleLevel * 0.05})`);
+    aura.addColorStop(0.45, `rgba(34, 122, 204, ${0.064 + structureLevel * 0.1 + massLevel * 0.05})`);
+    aura.addColorStop(1, "rgba(14, 42, 102, 0)");
+    ctx.fillStyle = aura;
+    ctx.fillRect(0, 0, width, height);
+
+    const body = ctx.createRadialGradient(
+      anchor.x - coreRadius * 0.22,
+      anchor.y - coreRadius * 0.2,
+      coreRadius * 0.08,
+      anchor.x,
+      anchor.y,
+      coreRadius * 1.46,
+    );
+    body.addColorStop(0, `rgba(232, 251, 255, ${0.18 + sparkleLevel * 0.2 + structureLevel * 0.06})`);
+    body.addColorStop(0.34, `rgba(126, 226, 255, ${0.19 + structureLevel * 0.16 + massLevel * 0.08})`);
+    body.addColorStop(0.7, `rgba(48, 154, 232, ${0.14 + massLevel * 0.16 + envelope * 0.06})`);
+    body.addColorStop(1, "rgba(14, 68, 158, 0)");
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(anchor.x, anchor.y, coreRadius * 1.46, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+
+    for (let ring = 0; ring < 3; ring += 1) {
+      const ringRadius = coreRadius * (1.02 + ring * 0.26 + structureLevel * 0.1);
+      const sweep = Math.PI * (0.34 + sparkleLevel * 0.24 + ring * 0.03);
+      const direction = ring % 2 === 0 ? 1 : -1;
+      const rotation = timestamp * (0.0015 + ring * 0.00032) * direction + ring * 1.03;
+      const ringAlpha = 0.05 + structureLevel * 0.1 + sparkleLevel * 0.08 - ring * 0.012;
+
+      ctx.shadowColor = `rgba(136, 236, 255, ${0.04 + sparkleLevel * 0.12})`;
+      ctx.shadowBlur = 2 + structureLevel * 6 + sparkleLevel * 4;
+      ctx.strokeStyle = `rgba(114, 226, 255, ${clamp(ringAlpha, 0.024, 0.26)})`;
+      ctx.lineWidth = 1.1 + structureLevel * 0.9 + ring * 0.22;
+
+      for (let pass = 0; pass < 2; pass += 1) {
+        const start = rotation + pass * Math.PI;
+        ctx.beginPath();
+        ctx.ellipse(
+          anchor.x,
+          anchor.y,
+          ringRadius,
+          ringRadius * (0.62 + ring * 0.04),
+          rotation * 0.25,
+          start,
+          start + sweep,
+        );
+        ctx.stroke();
+      }
+    }
+
+    const filamentCount = 8;
+    ctx.shadowBlur = 0;
+
+    for (let index = 0; index < filamentCount; index += 1) {
+      const direction = index % 2 === 0 ? 1 : -1;
+      const angle = timestamp * 0.00088 * direction + index * ((Math.PI * 2) / filamentCount);
+      const innerRadius = coreRadius * (0.42 + 0.04 * Math.sin(timestamp * 0.0012 + index));
+      const outerRadius =
+        coreRadius
+        * (1.08 + 0.26 * (0.5 + 0.5 * Math.sin(timestamp * 0.0019 + index * 0.87 + treble * 2.1)));
+      const startX = anchor.x + Math.cos(angle) * innerRadius;
+      const startY = anchor.y + Math.sin(angle) * innerRadius;
+      const controlAngle = angle + (index % 2 === 0 ? 0.46 : -0.46);
+      const controlRadius = (innerRadius + outerRadius) * 0.72;
+      const controlX = anchor.x + Math.cos(controlAngle) * controlRadius;
+      const controlY = anchor.y + Math.sin(controlAngle) * controlRadius;
+      const endX = anchor.x + Math.cos(angle) * outerRadius;
+      const endY = anchor.y + Math.sin(angle) * outerRadius;
+
+      ctx.strokeStyle = `rgba(142, 238, 255, ${0.03 + sparkleLevel * 0.13 + envelope * 0.03})`;
+      ctx.lineWidth = 0.95 + sparkleLevel * 0.7;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    const lensRadius = coreRadius * (0.48 + mid * 0.16 + sparkleLevel * 0.08);
+    const lens = ctx.createRadialGradient(
+      anchor.x - lensRadius * 0.26,
+      anchor.y - lensRadius * 0.18,
+      lensRadius * 0.08,
+      anchor.x,
+      anchor.y,
+      lensRadius * 1.85,
+    );
+    lens.addColorStop(0, `rgba(246, 254, 255, ${0.24 + sparkleLevel * 0.24})`);
+    lens.addColorStop(0.42, `rgba(146, 232, 255, ${0.22 + mid * 0.2})`);
+    lens.addColorStop(0.72, `rgba(58, 164, 233, ${0.16 + massLevel * 0.16})`);
+    lens.addColorStop(1, "rgba(18, 72, 154, 0)");
+    ctx.fillStyle = lens;
+    ctx.beginPath();
+    ctx.arc(anchor.x, anchor.y, lensRadius * 1.85, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(6, 26, 70, ${0.34 + massLevel * 0.18})`;
+    ctx.beginPath();
+    ctx.arc(anchor.x - coreRadius * 0.01, anchor.y + coreRadius * 0.02, lensRadius * 0.56, 0, Math.PI * 2);
+    ctx.fill();
+
+    const highlight = ctx.createRadialGradient(
+      anchor.x + coreRadius * 0.12,
+      anchor.y - coreRadius * 0.1,
+      0,
+      anchor.x + coreRadius * 0.12,
+      anchor.y - coreRadius * 0.1,
+      coreRadius * 0.4,
+    );
+    highlight.addColorStop(0, `rgba(255, 255, 255, ${0.54 + sparkleLevel * 0.26 + envelope * 0.08})`);
+    highlight.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = highlight;
+    ctx.beginPath();
+    ctx.arc(anchor.x + coreRadius * 0.12, anchor.y - coreRadius * 0.1, coreRadius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawForegroundShards(timestamp, { structureLevel, sparkleLevel, envelope }, anchor) {
+    const { ctx, width, height, foregroundShards } = this;
+    const radiusBase = Math.min(width, height) * (0.34 + structureLevel * 0.12);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+
+    for (const shard of foregroundShards) {
+      const orbit = timestamp * shard.speed * 1.35 + shard.phase;
+      const angle = orbit + shard.x * Math.PI * 2;
+      const orbitalRadius = radiusBase * (0.76 + shard.depth * 0.5);
+      const x =
+        anchor.x
+        + Math.cos(angle) * orbitalRadius
+        + Math.sin(timestamp * 0.0007 + shard.phase) * width * 0.01;
+      const y =
+        anchor.y
+        + Math.sin(angle * 1.08) * orbitalRadius * 0.58
+        + Math.cos(timestamp * 0.0006 + shard.phase) * height * 0.008;
+      const twinkle = 0.45 + 0.55 * Math.sin(timestamp * 0.0022 * shard.twinkle + shard.phase);
+      const alpha = clamp(
+        shard.alpha * twinkle * (0.45 + sparkleLevel * 1.15 + envelope * 0.26) * (this.isPlaying ? 1 : 0.74),
+        0.015,
+        0.65,
+      );
+      const length = 1.6 + shard.radius * (1.8 + sparkleLevel * 2.2);
+
+      ctx.strokeStyle = `rgba(${170 + Math.round(shard.tone * 52)}, ${228 + Math.round(shard.tone * 24)}, 255, ${alpha})`;
+      ctx.lineWidth = 0.48 + shard.radius * 0.52;
+      ctx.beginPath();
+      ctx.moveTo(x - length * 0.45, y - length * 0.18);
+      ctx.lineTo(x + length, y + length * 0.24);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(236, 250, 255, ${alpha * 0.72})`;
+      ctx.beginPath();
+      ctx.arc(x + length * 0.1, y + length * 0.02, Math.max(0.35, shard.radius * 0.42), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  drawPanelFrame({ structureLevel, ambientLevel, envelope }) {
+    const { ctx, width, height } = this;
+    ctx.strokeStyle = `rgba(112, 198, 255, ${0.11 + ambientLevel * 0.13 + structureLevel * 0.05})`;
+    ctx.lineWidth = 1.1;
     ctx.strokeRect(0.6, 0.6, width - 1.2, height - 1.2);
 
-    ctx.strokeStyle = `rgba(132, 220, 255, ${0.045 + panelGlow * 0.07 + structureLevel * 0.02})`;
+    ctx.strokeStyle = `rgba(132, 220, 255, ${0.03 + ambientLevel * 0.07 + envelope * 0.04})`;
     ctx.lineWidth = 1;
-    ctx.strokeRect(8.5, 8.5, width - 17, height - 17);
+    ctx.strokeRect(9.5, 9.5, width - 19, height - 19);
+
+    const topGlow = ctx.createLinearGradient(0, 0, 0, height * 0.24);
+    topGlow.addColorStop(0, `rgba(78, 174, 238, ${0.06 + ambientLevel * 0.06 + envelope * 0.02})`);
+    topGlow.addColorStop(1, "rgba(16, 48, 92, 0)");
+    ctx.fillStyle = topGlow;
+    ctx.fillRect(1, 1, width - 2, height * 0.24);
   }
 }
