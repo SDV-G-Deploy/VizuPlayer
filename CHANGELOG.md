@@ -169,3 +169,23 @@ All notable changes to this project will be documented in this file.
 
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - No JS files changed in this pass; `node --check` was not required.
+
+### Changed (Reactive Semantics Tuning / Luminous Cosmic Core)
+
+- Applied a narrow role-remap pass in `src/visual/visualizer.js`:
+  - reduced amplitude-led global pumping in ambient/supporting layers (`drawNebula`, `drawGrid`, `drawPanelFrame`, star/spectrum contributions)
+  - introduced local derived render levels (`massLevel`, `structureLevel`, `sparkleLevel`, `ambientLevel`, `envelope`) to keep amplitude a secondary envelope
+  - rebuilt center hierarchy in `drawCenterPulse`: bass-led mass/radius, mid-led halo/energy body, treble-led white-hot core and sparse edge articulation
+  - reduced spectrum bars participation in overall scene glow so bars no longer compete with the central luminous object
+- Applied matching narrow semantic tuning in `src/visual/nodeNetwork.js`:
+  - lowered amplitude influence on network visibility/glow in `updateEnergy` and draw paths
+  - shifted structural presence and connective tension toward mid-led behavior (`updateNodes`, `drawConnections`)
+  - increased bass contribution to node body weight/mass perception (`updateNodes`, `drawNodes`)
+  - kept treble accents rarer/sharper so they read as articulation, not global brightness multipliers
+
+### Validated (Reactive Semantics Tuning / Luminous Cosmic Core)
+
+- `node --check src/visual/visualizer.js`
+- `node --check src/visual/nodeNetwork.js`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`

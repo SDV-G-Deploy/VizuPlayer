@@ -206,9 +206,9 @@ export class NodeNetwork {
     this.energy.amplitude = lerp(this.energy.amplitude, targets.amplitude, smoothing * 0.9);
 
     const targetVisibility = clamp(
-      0.18 + this.energy.amplitude * 0.48 + this.energy.mid * 0.16,
-      0.14,
-      0.72,
+      0.16 + this.energy.mid * 0.34 + this.energy.bass * 0.1 + this.energy.amplitude * 0.12,
+      0.12,
+      0.64,
     );
     this.visibility = lerp(this.visibility, targetVisibility, isPlaying ? 0.14 : 0.05);
   }
@@ -217,7 +217,7 @@ export class NodeNetwork {
     const motionScale = Math.min(width, height) / 220;
 
     for (const node of this.nodes) {
-      const motionGain = isPlaying ? 0.82 + this.energy.mid * 0.86 : 0.52 + this.energy.mid * 0.25;
+      const motionGain = isPlaying ? 0.76 + this.energy.mid * 0.94 : 0.5 + this.energy.mid * 0.3;
       const offsetX =
         Math.sin(timestamp * node.motionSpeedX + node.phase) * node.drift * node.motionX * motionGain;
       const offsetY =
@@ -230,26 +230,26 @@ export class NodeNetwork {
       node.y = node.ny * height + offsetY * motionScale;
 
       const pulseWave = 0.5 + 0.5 * Math.sin(timestamp * node.pulseSpeed + node.phase * 2.4);
-      const bassPulse = this.energy.bass * (0.38 + node.weight * 0.45);
-      const ampPulse = this.energy.amplitude * 0.22;
-      const breathingPulse = isPlaying ? pulseWave * 0.11 : pulseWave * 0.045;
+      const bassPulse = this.energy.bass * (0.46 + node.weight * 0.52);
+      const ampPulse = this.energy.amplitude * 0.09;
+      const breathingPulse = isPlaying ? pulseWave * (0.085 + this.energy.mid * 0.035) : pulseWave * 0.04;
       node.radius = this.nodeRadius * node.weight * (1 + bassPulse + ampPulse + breathingPulse);
-      node.coreAlpha = clamp(0.24 + this.visibility * 0.4 + pulseWave * 0.05, 0.18, 0.78);
+      node.coreAlpha = clamp(0.2 + this.visibility * 0.34 + this.energy.mid * 0.08 + pulseWave * 0.04, 0.16, 0.72);
       node.spark = node.accent
-        ? clamp(this.energy.treble * (0.26 + pulseWave * 0.34), 0, 0.68)
+        ? clamp((this.energy.treble - 0.16) * (0.22 + pulseWave * 0.5), 0, 0.62)
         : 0;
     }
   }
 
   drawConnections(ctx, timestamp, isPlaying) {
-    const lineBase = 0.07 + this.energy.mid * 0.24 + this.energy.amplitude * 0.16;
-    const glowAlpha = clamp((0.03 + this.energy.amplitude * 0.22) * this.visibility, 0.02, 0.22);
+    const lineBase = 0.06 + this.energy.mid * 0.3 + this.energy.bass * 0.06 + this.energy.amplitude * 0.06;
+    const glowAlpha = clamp((0.02 + this.energy.mid * 0.12 + this.energy.treble * 0.04) * this.visibility, 0.015, 0.18);
 
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.shadowColor = `rgba(96, 214, 255, ${glowAlpha})`;
-    ctx.shadowBlur = 2 + this.energy.amplitude * 4;
+    ctx.shadowColor = `rgba(88, 201, 252, ${glowAlpha})`;
+    ctx.shadowBlur = 1.8 + this.energy.mid * 3 + this.energy.amplitude * 1.2;
 
     for (const connection of this.connections) {
       const from = this.nodes[connection.from];
@@ -260,22 +260,22 @@ export class NodeNetwork {
       }
 
       const breath = 0.86 + 0.14 * Math.sin(timestamp * 0.001 + connection.phase);
-      const canFlicker = isPlaying && this.energy.treble > 0.2 && connection.index % 4 === 0;
+      const canFlicker = isPlaying && this.energy.treble > 0.34 && connection.index % 5 === 0;
       const flicker = canFlicker
-        ? (0.02 + this.energy.treble * 0.08) *
-          (0.5 + 0.5 * Math.sin(timestamp * 0.012 + connection.phase * 6))
+        ? (0.012 + this.energy.treble * 0.045) *
+          (0.5 + 0.5 * Math.sin(timestamp * 0.011 + connection.phase * 6))
         : 0;
-      const alpha = clamp((lineBase * breath + flicker) * this.visibility, 0.02, 0.42);
-      const width = 0.55 + connection.weight * 0.56 + this.energy.mid * 0.38;
+      const alpha = clamp((lineBase * breath + flicker) * this.visibility, 0.016, 0.34);
+      const width = 0.5 + connection.weight * 0.52 + this.energy.mid * 0.5 + this.energy.bass * 0.1;
 
-      ctx.strokeStyle = `rgba(88, 182, 255, ${alpha * 0.38})`;
-      ctx.lineWidth = width + 0.9;
+      ctx.strokeStyle = `rgba(68, 154, 232, ${alpha * 0.34})`;
+      ctx.lineWidth = width + 0.85;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
       ctx.lineTo(to.x, to.y);
       ctx.stroke();
 
-      ctx.strokeStyle = `rgba(165, 233, 255, ${alpha * 0.82})`;
+      ctx.strokeStyle = `rgba(156, 226, 255, ${alpha * 0.84})`;
       ctx.lineWidth = width;
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
@@ -290,30 +290,30 @@ export class NodeNetwork {
     ctx.save();
 
     for (const node of this.nodes) {
-      const haloRadius = node.radius * (1.7 + this.energy.amplitude * 0.75);
+      const haloRadius = node.radius * (1.5 + this.energy.mid * 0.45 + this.energy.amplitude * 0.18);
       const halo = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, haloRadius);
-      halo.addColorStop(0, `rgba(116, 236, 255, ${clamp(node.coreAlpha * 0.26, 0.04, 0.3)})`);
-      halo.addColorStop(0.65, `rgba(74, 165, 236, ${clamp(node.coreAlpha * 0.1, 0.02, 0.16)})`);
+      halo.addColorStop(0, `rgba(116, 236, 255, ${clamp(node.coreAlpha * 0.24 + this.energy.mid * 0.04, 0.035, 0.28)})`);
+      halo.addColorStop(0.65, `rgba(74, 165, 236, ${clamp(node.coreAlpha * 0.09 + this.energy.mid * 0.025, 0.018, 0.14)})`);
       halo.addColorStop(1, "rgba(26, 68, 126, 0)");
       ctx.fillStyle = halo;
       ctx.beginPath();
       ctx.arc(node.x, node.y, haloRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.shadowColor = `rgba(117, 226, 255, ${0.1 + node.coreAlpha * 0.22})`;
-      ctx.shadowBlur = 3 + node.radius * 0.85 + this.energy.amplitude * 2.8;
-      ctx.fillStyle = `rgba(185, 244, 255, ${clamp(node.coreAlpha, 0.22, 0.74)})`;
+      ctx.shadowColor = `rgba(118, 224, 255, ${0.08 + node.coreAlpha * 0.2})`;
+      ctx.shadowBlur = 2.2 + node.radius * 0.72 + this.energy.mid * 1.6 + this.energy.amplitude * 0.8;
+      ctx.fillStyle = `rgba(185, 244, 255, ${clamp(node.coreAlpha + this.energy.bass * 0.06, 0.2, 0.76)})`;
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.fillStyle = `rgba(18, 60, 110, ${0.34 + node.coreAlpha * 0.16})`;
+      ctx.fillStyle = `rgba(18, 60, 110, ${0.38 + node.coreAlpha * 0.15})`;
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius * 0.42, 0, Math.PI * 2);
       ctx.fill();
 
-      if (node.spark > 0.12) {
+      if (node.spark > 0.16) {
         this.drawTrebleAccent(ctx, node, timestamp);
       }
     }
@@ -322,12 +322,12 @@ export class NodeNetwork {
   }
 
   drawTrebleAccent(ctx, node, timestamp) {
-    const arcRadius = node.radius * (1.45 + node.spark * 0.42);
+    const arcRadius = node.radius * (1.28 + node.spark * 0.36);
     const arcStart = timestamp * 0.003 + node.phase;
-    const arcSweep = Math.PI * (0.42 + node.spark * 0.5);
+    const arcSweep = Math.PI * (0.26 + node.spark * 0.42);
     const arcEnd = arcStart + arcSweep;
 
-    ctx.strokeStyle = `rgba(210, 245, 255, ${0.12 + node.spark * 0.3})`;
+    ctx.strokeStyle = `rgba(210, 245, 255, ${0.08 + node.spark * 0.28})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(node.x, node.y, arcRadius, arcStart, arcEnd);
@@ -335,9 +335,9 @@ export class NodeNetwork {
 
     const tipX = node.x + Math.cos(arcEnd) * arcRadius;
     const tipY = node.y + Math.sin(arcEnd) * arcRadius;
-    ctx.fillStyle = `rgba(220, 252, 255, ${0.14 + node.spark * 0.34})`;
+    ctx.fillStyle = `rgba(220, 252, 255, ${0.12 + node.spark * 0.3})`;
     ctx.beginPath();
-    ctx.arc(tipX, tipY, 0.8 + node.spark * 0.9, 0, Math.PI * 2);
+    ctx.arc(tipX, tipY, 0.7 + node.spark * 0.8, 0, Math.PI * 2);
     ctx.fill();
   }
 }

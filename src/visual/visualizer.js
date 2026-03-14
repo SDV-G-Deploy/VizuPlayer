@@ -140,72 +140,103 @@ export class Visualizer {
     const mid = this.normalized.mid;
     const treble = this.normalized.treble;
     const amplitude = this.normalized.amplitude;
-    const activity = this.isPlaying
-      ? 0.45 + amplitude * 0.55
-      : 0.12 + amplitude * 0.12;
-    const panelGlow = 0.18 + activity * 0.5;
+    const envelope = this.isPlaying ? 0.2 + amplitude * 0.34 : 0.08 + amplitude * 0.08;
+    const massLevel = clamp(
+      (this.isPlaying ? 0.14 : 0.08) + bass * 0.54 + amplitude * 0.08,
+      0.08,
+      0.92,
+    );
+    const structureLevel = clamp(
+      (this.isPlaying ? 0.18 : 0.1) + mid * 0.5 + amplitude * 0.06,
+      0.1,
+      0.9,
+    );
+    const sparkleLevel = clamp(
+      (this.isPlaying ? 0.07 : 0.04) + treble * 0.64 + amplitude * 0.04,
+      0.04,
+      0.95,
+    );
+    const ambientLevel = clamp(
+      (this.isPlaying ? 0.12 : 0.08) + mid * 0.2 + bass * 0.12 + amplitude * 0.08,
+      0.08,
+      0.7,
+    );
+    const panelGlow = 0.1 + ambientLevel * 0.26 + structureLevel * 0.06;
 
     const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height);
-    backgroundGradient.addColorStop(0, `rgba(6, 16, 36, ${0.95 + activity * 0.04})`);
+    backgroundGradient.addColorStop(
+      0,
+      `rgba(6, 16, 36, ${0.96 + ambientLevel * 0.025 + envelope * 0.01})`,
+    );
     backgroundGradient.addColorStop(0.55, "rgba(4, 10, 24, 0.98)");
     backgroundGradient.addColorStop(1, "rgba(2, 6, 14, 1)");
 
     ctx.fillStyle = backgroundGradient;
     ctx.fillRect(0, 0, width, height);
 
-    this.drawNebula(timestamp, panelGlow, activity);
-    this.drawStarField(timestamp, treble, amplitude, activity);
-    this.drawGrid(activity);
-    this.drawCenterPulse(timestamp, { bass, mid, treble, amplitude }, activity);
+    this.drawNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope });
+    this.drawStarField(timestamp, { treble, amplitude, sparkleLevel, envelope });
+    this.drawGrid(structureLevel, ambientLevel);
+    this.drawCenterPulse(
+      timestamp,
+      { bass, mid, treble, amplitude },
+      { massLevel, structureLevel, sparkleLevel, envelope },
+    );
     this.drawNodeNetwork(timestamp, { bass, mid, treble, amplitude });
-    this.drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, activity);
-    this.drawPanelFrame(panelGlow, activity);
+    this.drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, { structureLevel, envelope });
+    this.drawPanelFrame(panelGlow, structureLevel);
   }
 
-  drawNebula(timestamp, panelGlow, activity) {
+  drawNebula(timestamp, { ambientLevel, structureLevel, massLevel, envelope }) {
     const { ctx, width, height } = this;
     const driftX = Math.sin(timestamp * 0.00016) * width * 0.024;
     const driftY = Math.cos(timestamp * 0.0002) * height * 0.018;
     const centerX = width * 0.5 + driftX;
     const centerY = height * 0.5 + driftY;
-    const radius = Math.max(width, height) * (0.62 + panelGlow * 0.07);
+    const radius = Math.max(width, height) * (0.58 + massLevel * 0.12 + structureLevel * 0.04);
 
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-    gradient.addColorStop(0, `rgba(26, 88, 160, ${0.1 + panelGlow * 0.14 + activity * 0.06})`);
-    gradient.addColorStop(0.55, `rgba(14, 45, 95, ${0.04 + activity * 0.05})`);
+    gradient.addColorStop(
+      0,
+      `rgba(22, 76, 146, ${0.065 + ambientLevel * 0.07 + structureLevel * 0.08 + envelope * 0.025})`,
+    );
+    gradient.addColorStop(
+      0.55,
+      `rgba(10, 34, 78, ${0.028 + ambientLevel * 0.035 + structureLevel * 0.045 + envelope * 0.014})`,
+    );
     gradient.addColorStop(1, "rgba(6, 12, 26, 0)");
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   }
 
-  drawStarField(timestamp, treble, amplitude, activity) {
+  drawStarField(timestamp, { treble, amplitude, sparkleLevel, envelope }) {
     const { ctx, width, height, starField } = this;
     const sparkleGain = this.isPlaying
-      ? 0.16 + treble * 0.38 + activity * 0.24
-      : 0.08 + activity * 0.14;
+      ? 0.12 + sparkleLevel * 0.4 + treble * 0.18 + envelope * 0.05
+      : 0.06 + sparkleLevel * 0.16;
 
     for (const star of starField) {
       const pulse = 0.55 + 0.45 * Math.sin(timestamp * 0.0012 * star.speed + star.phase);
       const alpha = clamp(
-        star.alpha * pulse * sparkleGain + amplitude * 0.015 * activity,
-        0.015,
-        0.42,
+        star.alpha * pulse * sparkleGain + treble * 0.012 + amplitude * 0.005,
+        0.012,
+        0.38,
       );
-      ctx.fillStyle = `rgba(166, 223, 255, ${alpha})`;
+      ctx.fillStyle = `rgba(178, 230, 255, ${alpha})`;
       ctx.beginPath();
       ctx.arc(star.x * width, star.y * height, star.radius, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  drawGrid(activity) {
+  drawGrid(structureLevel, ambientLevel) {
     const { ctx, width, height } = this;
     const rows = 6;
     const columns = 8;
 
-    ctx.strokeStyle = `rgba(110, 180, 255, ${0.015 + activity * 0.06})`;
-    ctx.lineWidth = 0.9;
+    ctx.strokeStyle = `rgba(110, 180, 255, ${0.012 + structureLevel * 0.045 + ambientLevel * 0.014})`;
+    ctx.lineWidth = 0.85;
 
     for (let row = 1; row < rows; row += 1) {
       const y = (height / rows) * row;
@@ -234,7 +265,7 @@ export class Visualizer {
     });
   }
 
-  drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, activity) {
+  drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }, { structureLevel, envelope }) {
     const { ctx, width, height } = this;
     const horizontalPadding = 18;
     const baseY = height - 24;
@@ -249,11 +280,11 @@ export class Visualizer {
       let zoneGain = 1;
 
       if (zone < 0.33) {
-        zoneGain += bass * 1.05;
+        zoneGain += bass * 0.88;
       } else if (zone < 0.67) {
-        zoneGain += mid * 0.9;
+        zoneGain += mid * 0.78;
       } else {
-        zoneGain += treble * 0.95;
+        zoneGain += treble * 0.84;
       }
 
       const shimmer = this.isPlaying
@@ -262,28 +293,32 @@ export class Visualizer {
       const idleWave = this.isPlaying
         ? 0.008
         : 0.004 + 0.01 * (Math.sin(timestamp * 0.0018 + index * 0.22) * 0.5 + 0.5);
-      const trebleFlicker = zone > 0.67 ? treble * shimmer * (0.16 + activity * 0.1) : 0;
-      const target = clamp(this.mappedSpectrum[index] * zoneGain + idleWave + trebleFlicker, 0, 1.05);
-      const smoothing = this.isPlaying ? 0.22 + treble * 0.12 : 0.07;
+      const trebleFlicker = zone > 0.67 ? treble * shimmer * (0.11 + envelope * 0.06) : 0;
+      const target = clamp(this.mappedSpectrum[index] * zoneGain + idleWave + trebleFlicker, 0, 1.02);
+      const smoothing = this.isPlaying ? 0.2 + treble * 0.1 : 0.07;
       this.smoothBars[index] = lerp(this.smoothBars[index], target, smoothing);
 
-      const barHeight = Math.max(2, this.smoothBars[index] * drawHeight * (0.66 + activity * 0.54));
+      const roleLift = zone < 0.33 ? bass : zone < 0.67 ? mid : treble;
+      const barHeight = Math.max(
+        2,
+        this.smoothBars[index] * drawHeight * (0.54 + roleLift * 0.23 + amplitude * 0.08 + envelope * 0.05),
+      );
       const x = horizontalPadding + index * (barWidth + gap);
       const y = baseY - barHeight;
 
       const gradient = ctx.createLinearGradient(0, y, 0, baseY);
-      gradient.addColorStop(0, `rgba(152, 238, 255, ${0.72 + activity * 0.14})`);
-      gradient.addColorStop(0.5, `rgba(72, 174, 255, ${0.42 + activity * 0.18})`);
-      gradient.addColorStop(1, "rgba(20, 70, 140, 0.32)");
+      gradient.addColorStop(0, `rgba(152, 238, 255, ${0.46 + roleLift * 0.12 + envelope * 0.06})`);
+      gradient.addColorStop(0.5, `rgba(72, 174, 255, ${0.28 + roleLift * 0.1 + envelope * 0.04})`);
+      gradient.addColorStop(1, "rgba(20, 70, 140, 0.24)");
 
-      ctx.shadowColor = `rgba(99, 218, 255, ${0.08 + activity * 0.28})`;
-      ctx.shadowBlur = 4 + activity * 7;
+      ctx.shadowColor = `rgba(99, 218, 255, ${0.035 + roleLift * 0.08 + envelope * 0.08})`;
+      ctx.shadowBlur = 2 + roleLift * 1.8 + envelope * 2.4;
       ctx.fillStyle = gradient;
       ctx.fillRect(x, y, barWidth, barHeight);
       ctx.shadowBlur = 0;
     }
 
-    ctx.strokeStyle = `rgba(142, 205, 255, ${0.22 + activity * 0.2})`;
+    ctx.strokeStyle = `rgba(142, 205, 255, ${0.15 + structureLevel * 0.09 + envelope * 0.04})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(horizontalPadding - 4, baseY + 0.5);
@@ -291,46 +326,86 @@ export class Visualizer {
     ctx.stroke();
   }
 
-  drawCenterPulse(timestamp, { bass, mid, treble, amplitude }, activity) {
+  drawCenterPulse(
+    timestamp,
+    { bass, mid, treble, amplitude },
+    { massLevel, structureLevel, sparkleLevel, envelope },
+  ) {
     const { ctx, width, height } = this;
-    const pulse = this.isPlaying ? Math.sin(timestamp * 0.0048 + bass * 6.3) : Math.sin(timestamp * 0.0014);
+    const pulse = this.isPlaying ? Math.sin(timestamp * 0.0038 + bass * 7.2) : Math.sin(timestamp * 0.0014);
     const centerX = width * 0.5;
     const centerY = height * 0.42;
-    const radius = height * (0.085 + mid * 0.08 + amplitude * 0.06 + pulse * 0.012);
+    const radius = height * (0.082 + bass * 0.1 + amplitude * 0.03 + pulse * 0.013);
 
-    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.2);
-    halo.addColorStop(0, `rgba(82, 235, 255, ${0.08 + activity * 0.16})`);
-    halo.addColorStop(0.6, `rgba(42, 140, 215, ${0.04 + activity * 0.09})`);
+    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.45);
+    halo.addColorStop(
+      0,
+      `rgba(70, 208, 255, ${0.045 + mid * 0.13 + structureLevel * 0.06 + envelope * 0.02})`,
+    );
+    halo.addColorStop(0.58, `rgba(34, 118, 192, ${0.024 + mid * 0.09 + envelope * 0.02})`);
     halo.addColorStop(1, "rgba(16, 38, 84, 0)");
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, width, height);
 
-    if (activity < 0.18) {
+    const coreBody = ctx.createRadialGradient(centerX, centerY, radius * 0.08, centerX, centerY, radius * 1.08);
+    coreBody.addColorStop(
+      0,
+      `rgba(136, 235, 255, ${0.16 + mid * 0.16 + structureLevel * 0.06 + massLevel * 0.03})`,
+    );
+    coreBody.addColorStop(0.62, `rgba(58, 164, 230, ${0.09 + bass * 0.1 + envelope * 0.03})`);
+    coreBody.addColorStop(1, "rgba(24, 80, 148, 0)");
+    ctx.fillStyle = coreBody;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * 1.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    const brightCoreRadius = radius * (0.26 + treble * 0.22 + sparkleLevel * 0.06);
+    const brightCore = ctx.createRadialGradient(
+      centerX,
+      centerY,
+      brightCoreRadius * 0.08,
+      centerX,
+      centerY,
+      brightCoreRadius * 1.9,
+    );
+    brightCore.addColorStop(0, `rgba(245, 253, 255, ${0.44 + treble * 0.38})`);
+    brightCore.addColorStop(0.5, `rgba(186, 241, 255, ${0.2 + treble * 0.24 + envelope * 0.04})`);
+    brightCore.addColorStop(1, "rgba(140, 220, 255, 0)");
+    ctx.fillStyle = brightCore;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, brightCoreRadius * 1.9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.32 + treble * 0.34 + envelope * 0.06})`;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, brightCoreRadius * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (sparkleLevel < 0.14) {
       return;
     }
 
-    const accentCount = 5;
-    ctx.strokeStyle = `rgba(166, 231, 255, ${0.02 + treble * 0.1 * activity})`;
-    ctx.lineWidth = 1;
+    const arcRadius = radius * (0.9 + treble * 0.22);
+    const arcSweep = Math.PI * (0.18 + treble * 0.16);
+    const arcStart = timestamp * 0.0045 + treble * 1.8;
+    ctx.strokeStyle = `rgba(223, 248, 255, ${0.06 + treble * 0.2})`;
+    ctx.lineWidth = 0.8 + treble * 0.8;
 
-    for (let index = 0; index < accentCount; index += 1) {
-      const x = width * ((index + 1) / (accentCount + 1));
-      const sway = Math.sin(timestamp * 0.003 + index * 0.9) * 3;
-      const lineHeight = height * (0.05 + treble * 0.08 * activity);
+    for (let index = 0; index < 2; index += 1) {
+      const phase = arcStart + index * Math.PI;
       ctx.beginPath();
-      ctx.moveTo(x + sway, centerY - lineHeight * 0.5);
-      ctx.lineTo(x + sway, centerY + lineHeight * 0.5);
+      ctx.arc(centerX, centerY, arcRadius, phase, phase + arcSweep);
       ctx.stroke();
     }
   }
 
-  drawPanelFrame(panelGlow, activity) {
+  drawPanelFrame(panelGlow, structureLevel) {
     const { ctx, width, height } = this;
-    ctx.strokeStyle = `rgba(116, 206, 255, ${0.26 + panelGlow * 0.18})`;
+    ctx.strokeStyle = `rgba(116, 206, 255, ${0.18 + panelGlow * 0.1})`;
     ctx.lineWidth = 1.2;
     ctx.strokeRect(0.6, 0.6, width - 1.2, height - 1.2);
 
-    ctx.strokeStyle = `rgba(132, 220, 255, ${0.08 + panelGlow * 0.1 + activity * 0.05})`;
+    ctx.strokeStyle = `rgba(132, 220, 255, ${0.045 + panelGlow * 0.07 + structureLevel * 0.02})`;
     ctx.lineWidth = 1;
     ctx.strokeRect(8.5, 8.5, width - 17, height - 17);
   }

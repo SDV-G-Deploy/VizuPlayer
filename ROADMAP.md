@@ -7,7 +7,7 @@ Build a reusable web music engine that can run standalone and serve as the audio
 ## Current Position
 
 - Stage: 3 - Lifecycle/load stable baseline accepted
-- Date: 2026-03-14
+- Date: 2026-03-15
 
 ## Completed
 
@@ -52,10 +52,20 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - `AudioEngine.getCurrentSource()` now returns `""` when `src` and `getAttribute("src")` are empty after unload, avoiding stale browser `currentSrc`
   - added minimal targeted regression check `scripts/regression/unload-source-reporting-regression.mjs`
   - local validation: targeted regression PASS; command/phase baseline remains `13/13 PASS`
+- Reactive Semantics Tuning / Luminous Cosmic Core narrow beauty-pass:
+  - de-globalized amplitude pumping in secondary layers (`nebula`, `grid`, `panel frame`, bars luminous mass)
+  - remapped core semantics: bass -> mass/radius, mid -> halo/flow field, treble -> white-hot core edge accents
+  - re-semantized node network: less amplitude-led visibility, stronger mid-led structure/flow, bass-led body weight, rarer treble spark accents
+  - constrained implementation to `src/visual/visualizer.js` and `src/visual/nodeNetwork.js`
+  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
 
 ## Active Next
 
-- Run a focused tiny audit-pass for post-`unload` debug source-reporting consistency (ensure no stale URL leaks from `getCurrentSource()`).
+- Execute manual visual validation on 4 target scenarios:
+  - bass-heavy track
+  - mid-rich / vocal / synth-rich track
+  - treble-bright track
+  - pause / resume behavior
 - Keep the regression harness green as the lifecycle/load baseline safety net.
 
 ## Milestones
