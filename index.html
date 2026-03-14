@@ -3,59 +3,169 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VizuPlayer MVP</title>
+  <title>VizuPlayer</title>
   <style>
     :root {
       color-scheme: dark;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: #111423;
-      color: #eef3ff;
+      font-family: "Manrope", "Segoe UI", "Arial", sans-serif;
+      --text-main: #ecf2ff;
+      --text-soft: rgba(229, 238, 255, 0.78);
+      --panel-bg-top: rgba(13, 21, 43, 0.84);
+      --panel-bg-bottom: rgba(8, 13, 28, 0.88);
+      --panel-border: rgba(136, 187, 255, 0.22);
+      --card-bg: rgba(8, 16, 33, 0.62);
+      --card-border: rgba(150, 200, 255, 0.18);
+      --accent: #8fd0ff;
+      --accent-strong: #c0ebff;
+      --button-bg: rgba(33, 76, 132, 0.34);
+      --button-bg-hover: rgba(46, 98, 162, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      box-sizing: border-box;
-      background: radial-gradient(circle at top left, #1a2250, #111423 60%);
+      padding: 24px;
+      color: var(--text-main);
+      background:
+        radial-gradient(110% 130% at 12% -10%, rgba(68, 109, 184, 0.4), transparent 58%),
+        radial-gradient(85% 120% at 100% 0%, rgba(31, 88, 156, 0.32), transparent 62%),
+        linear-gradient(160deg, #070c1d 0%, #090f22 46%, #050913 100%);
     }
 
-    .panel {
-      width: min(100%, 900px);
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 12px;
-      padding: 20px;
-      box-sizing: border-box;
-      box-shadow: 0 12px 36px rgba(3, 9, 27, 0.35);
+    .product-shell {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      border-radius: 22px;
+      border: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, var(--panel-bg-top), var(--panel-bg-bottom));
+      box-shadow: 0 24px 54px rgba(1, 6, 16, 0.56);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+      gap: 16px;
+    }
+
+    .hero-header {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 6px;
+    }
+
+    .brand-kicker {
+      margin: 0;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(171, 216, 255, 0.94);
     }
 
     h1 {
-      margin: 0 0 10px;
-      font-size: 1.45rem;
+      margin: 0;
+      font-size: clamp(1.6rem, 2.9vw, 2.2rem);
+      line-height: 1.1;
+      letter-spacing: 0.01em;
     }
 
-    p {
-      margin-top: 0;
-      opacity: 0.88;
+    .subtitle {
+      margin: 0;
+      max-width: 72ch;
+      color: var(--text-soft);
+      font-size: 0.98rem;
+      line-height: 1.45;
     }
 
-    .section {
-      margin-bottom: 16px;
-    }
-
-    .section h2 {
-      margin: 0 0 8px;
-      font-size: 1rem;
+    #player-status {
+      margin: 4px 0 0;
+      width: fit-content;
+      max-width: 100%;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
       font-weight: 700;
+      letter-spacing: 0.03em;
+      border: 1px solid rgba(141, 204, 255, 0.34);
+      background: rgba(20, 52, 92, 0.42);
+      color: #d9f1ff;
+    }
+
+    .visual-stage {
+      margin: 0;
+    }
+
+    .visualizer-shell {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(134, 202, 255, 0.44);
+      background: linear-gradient(180deg, rgba(5, 11, 26, 0.98), rgba(3, 8, 19, 0.98));
+      box-shadow:
+        inset 0 0 0 1px rgba(170, 223, 255, 0.12),
+        inset 0 22px 44px rgba(50, 112, 175, 0.09),
+        0 16px 36px rgba(2, 11, 28, 0.46);
+    }
+
+    #visualizer-canvas {
+      display: block;
+      width: 100%;
+      height: clamp(300px, 52vh, 460px);
+    }
+
+    .visualizer-label {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(138, 214, 255, 0.48);
+      background: rgba(8, 30, 54, 0.58);
+      color: rgba(192, 234, 255, 0.96);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .visualizer-hint {
+      margin: 9px 2px 0;
+      color: rgba(206, 228, 255, 0.72);
+      font-size: 0.88rem;
+    }
+
+    .side-stack {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .control-card {
+      margin: 0;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      box-shadow: inset 0 1px 0 rgba(184, 218, 255, 0.06);
+    }
+
+    .control-card h2 {
+      margin: 0 0 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(189, 226, 255, 0.84);
     }
 
     .hint {
       margin: 8px 0 0;
-      font-size: 0.9rem;
-      opacity: 0.78;
+      color: rgba(214, 231, 255, 0.68);
+      font-size: 0.82rem;
+      line-height: 1.4;
     }
 
     .row {
@@ -64,28 +174,34 @@
       gap: 8px;
     }
 
-    input[type="file"] {
-      width: 100%;
-      box-sizing: border-box;
+    .row + .row {
+      margin-top: 8px;
     }
 
+    input[type="file"],
     #track-url-input {
       width: 100%;
-      box-sizing: border-box;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      background: rgba(0, 0, 0, 0.2);
-      color: inherit;
+      border-radius: 10px;
+      border: 1px solid rgba(149, 201, 255, 0.28);
+      background: rgba(4, 11, 24, 0.58);
+      color: var(--text-main);
+      padding: 10px;
     }
 
     button {
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      background: rgba(255, 255, 255, 0.08);
-      color: inherit;
-      border-radius: 8px;
-      padding: 8px 12px;
+      border: 1px solid rgba(149, 202, 255, 0.34);
+      background: var(--button-bg);
+      color: #e7f3ff;
+      border-radius: 10px;
+      padding: 9px 12px;
       cursor: pointer;
+      font-weight: 600;
+      transition: background-color 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover:enabled {
+      background: var(--button-bg-hover);
+      border-color: rgba(172, 220, 255, 0.55);
     }
 
     button:disabled {
@@ -93,166 +209,168 @@
       cursor: not-allowed;
     }
 
-    #player-status {
-      margin: 0 0 12px;
-      font-weight: 700;
+    .diagnostics {
+      border: 1px solid rgba(130, 176, 231, 0.18);
+      border-radius: 14px;
+      background: rgba(5, 10, 21, 0.4);
+      padding: 10px 12px 12px;
     }
 
-    .visualizer-shell {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid rgba(114, 198, 255, 0.36);
-      background: linear-gradient(180deg, rgba(5, 12, 28, 0.98), rgba(4, 8, 18, 0.98));
-      box-shadow: inset 0 0 0 1px rgba(160, 224, 255, 0.14), 0 12px 26px rgba(3, 14, 30, 0.4);
-    }
-
-    #visualizer-canvas {
-      display: block;
-      width: 100%;
-      height: 260px;
-    }
-
-    .visualizer-label {
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      padding: 3px 8px;
-      font-size: 0.72rem;
+    .diagnostics summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.8rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(170, 229, 255, 0.9);
-      border: 1px solid rgba(139, 214, 255, 0.4);
-      border-radius: 999px;
-      background: rgba(6, 26, 46, 0.55);
-      pointer-events: none;
+      font-weight: 700;
+      color: rgba(167, 207, 250, 0.78);
     }
 
-    .visualizer-hint {
-      margin: 8px 0 0;
-      font-size: 0.9rem;
-      opacity: 0.78;
+    .diagnostics summary::-webkit-details-marker {
+      display: none;
     }
 
     .analysis-grid {
+      margin-top: 10px;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 8px;
     }
 
     .metric {
-      border: 1px solid rgba(255, 255, 255, 0.17);
-      border-radius: 8px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(123, 167, 219, 0.2);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(7, 16, 34, 0.46);
     }
 
     .metric-name {
       display: block;
-      opacity: 0.8;
-      font-size: 0.88rem;
+      font-size: 0.73rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: rgba(198, 222, 255, 0.72);
       margin-bottom: 4px;
     }
 
     .metric-value {
-      font-size: 1.25rem;
-      font-family: Consolas, Monaco, monospace;
+      font-size: 1rem;
+      font-family: "Consolas", "Monaco", monospace;
       font-weight: 700;
+      color: #d9efff;
     }
 
     #analysis-output {
-      margin: 0;
+      margin: 8px 0 0;
       padding: 10px;
-      border-radius: 8px;
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      font-family: Consolas, Monaco, monospace;
-      font-size: 0.9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(117, 166, 224, 0.2);
+      background: rgba(2, 9, 20, 0.5);
+      font-family: "Consolas", "Monaco", monospace;
+      font-size: 0.78rem;
+      color: rgba(196, 221, 252, 0.74);
       white-space: pre-wrap;
     }
 
-    @media (max-width: 640px) {
-      .analysis-grid {
+    @media (max-width: 980px) {
+      .product-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side-stack {
         grid-template-columns: 1fr;
       }
 
       #visualizer-canvas {
-        height: 210px;
+        height: clamp(250px, 42vh, 360px);
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .product-shell {
+        padding: 16px;
+      }
+
+      .analysis-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <main class="panel">
-    <h1>VizuPlayer Audio Analysis MVP</h1>
-    <p>Use Local file as primary input, or load a Demo/URL track for hosted testing.</p>
+  <main class="product-shell">
+    <header class="hero-header">
+      <p class="brand-kicker">VizuPlayer</p>
+      <h1>Music-Reactive Player</h1>
+      <p class="subtitle">Load a local track or demo URL, then drive the visual field with real-time playback.</p>
+      <p id="player-status">Status: waiting for track</p>
+    </header>
 
-    <section class="section" aria-label="Local file">
-      <h2>Local File (Primary)</h2>
-      <input id="audio-file-input" type="file" accept="audio/*" />
-      <p class="hint">Select audio from your computer.</p>
-    </section>
-
-    <section class="section" aria-label="Demo URL track">
-      <h2>Demo / URL Track</h2>
-      <div class="row">
-        <input
-          id="track-url-input"
-          type="text"
-          placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
-          value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
-        />
-      </div>
-      <div class="row" style="margin-top: 8px;">
-        <button id="load-url-button">Load Demo/URL</button>
-        <button id="load-demo-button">Load Bundled Demo</button>
-      </div>
-      <p class="hint">For GitHub Pages, use relative repo paths or direct audio URLs.</p>
-    </section>
-
-    <section class="section" aria-label="Playback controls">
-      <h2>Playback</h2>
-      <div class="row">
-        <button id="play-button" disabled>Play</button>
-        <button id="pause-button" disabled>Pause</button>
-        <button id="stop-button" disabled>Stop</button>
-      </div>
-    </section>
-
-    <p id="player-status">Status: waiting for track</p>
-
-    <section class="section" aria-label="Cosmic signal panel">
-      <h2>Cosmic Signal Panel</h2>
+    <section class="visual-stage" aria-label="Reactive visual field">
       <div class="visualizer-shell">
         <canvas id="visualizer-canvas" width="780" height="260" aria-label="Audio visualizer canvas"></canvas>
-        <span class="visualizer-label">Signal Panel</span>
+        <span class="visualizer-label">Reactive Field</span>
       </div>
-      <p class="visualizer-hint">Idle mode stays calm until playback starts.</p>
+      <p class="visualizer-hint">Quiet when idle, expressive when the track is active.</p>
     </section>
 
-    <section class="section" aria-label="Live analysis">
-      <h2>Live Analysis</h2>
-      <div class="analysis-grid">
-        <div class="metric">
-          <span class="metric-name">Bass</span>
-          <span id="analysis-bass" class="metric-value">0</span>
+    <aside class="side-stack" aria-label="Playback controls and sources">
+      <section class="control-card" aria-label="Local and URL source">
+        <h2>Source</h2>
+        <div class="row">
+          <input id="audio-file-input" type="file" accept="audio/*" />
         </div>
-        <div class="metric">
-          <span class="metric-name">Mid</span>
-          <span id="analysis-mid" class="metric-value">0</span>
+        <p class="hint">Local file is the primary source path.</p>
+        <div class="row">
+          <input
+            id="track-url-input"
+            type="text"
+            placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+            value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+          />
         </div>
-        <div class="metric">
-          <span class="metric-name">Treble</span>
-          <span id="analysis-treble" class="metric-value">0</span>
+        <div class="row">
+          <button id="load-url-button">Load URL</button>
+          <button id="load-demo-button">Load Demo</button>
         </div>
-        <div class="metric">
-          <span class="metric-name">Amplitude</span>
-          <span id="analysis-amplitude" class="metric-value">0</span>
+      </section>
+
+      <section class="control-card" aria-label="Playback controls">
+        <h2>Playback</h2>
+        <div class="row">
+          <button id="play-button" disabled>Play</button>
+          <button id="pause-button" disabled>Pause</button>
+          <button id="stop-button" disabled>Stop</button>
         </div>
-      </div>
-      <pre id="analysis-output">{ "bass": 0, "mid": 0, "treble": 0, "amplitude": 0 }</pre>
-    </section>
+      </section>
+
+      <details class="diagnostics" aria-label="Live analysis diagnostics">
+        <summary>Signal Diagnostics</summary>
+        <div class="analysis-grid">
+          <div class="metric">
+            <span class="metric-name">Bass</span>
+            <span id="analysis-bass" class="metric-value">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-name">Mid</span>
+            <span id="analysis-mid" class="metric-value">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-name">Treble</span>
+            <span id="analysis-treble" class="metric-value">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric-name">Amplitude</span>
+            <span id="analysis-amplitude" class="metric-value">0</span>
+          </div>
+        </div>
+        <pre id="analysis-output">{ "bass": 0, "mid": 0, "treble": 0, "amplitude": 0 }</pre>
+      </details>
+    </aside>
   </main>
 
   <script type="module" src="./src/core/app.js"></script>

@@ -156,3 +156,16 @@
   - `node --check src/visual/nodeNetwork.js`
   - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - Manual visual smoke was not executable in this CLI-only environment (no interactive browser view), so visual confirmation remains pending in-browser for states: `idle`, `ready`, `playing`, `paused`, `stop/unload`.
+
+## 2026-03-15 (Beauty Slice: UI Coherence Lite / Product Shell Reframe)
+
+- Implemented a narrow UI/HTML/CSS beauty pass focused only on shell composition and product framing.
+- Reworked `index.html` layout so the visualizer is the clear hero area and controls are a compact secondary deck.
+- Reduced MVP/debug-panel feel by moving diagnostics into a collapsible secondary block while preserving live metric bindings.
+- Preserved all existing runtime DOM ids and avoided any lifecycle/orchestration/audio/API scope changes.
+- Validation completed:
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- Browser/Pages visual checks to confirm after deploy:
+  - hero prominence of visualizer
+  - diagnostics no longer visually dominating
+  - cohesion between status, controls, and visual scene at desktop/mobile sizes

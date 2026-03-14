@@ -156,3 +156,16 @@ All notable changes to this project will be documented in this file.
 - `node --check src/visual/visualizer.js`
 - `node --check src/visual/nodeNetwork.js`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+
+### Changed (Beauty Slice: UI Coherence Lite / Product Shell Reframe)
+
+- Reframed `index.html` from MVP/debug panel composition into a product-shell layout without changing runtime logic.
+- Promoted the visualizer area to the primary hero region with larger visual footprint and stronger framing.
+- Grouped source + playback controls into a compact side deck to reduce competition with the visual scene.
+- Demoted diagnostics into a secondary collapsible block (`<details>`) to reduce always-on debug dominance.
+- Updated typography/spacing/surface hierarchy for a cleaner product-facing presentation while preserving all existing DOM ids used by JS.
+
+### Validated (Beauty Slice: UI Coherence Lite / Product Shell Reframe)
+
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- No JS files changed in this pass; `node --check` was not required.
