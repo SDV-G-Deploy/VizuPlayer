@@ -29,6 +29,7 @@ const API_COMMANDS = Object.freeze({
   PLAY: "play",
   PAUSE: "pause",
   STOP: "stop",
+  UNLOAD: "unload",
 });
 
 function createConsoleLogger(prefix) {
@@ -108,6 +109,38 @@ export async function bootstrap(options = {}) {
   let queuedLoadRequest = null;
   let loadWorkerRunning = false;
   let activeLoadController = null;
+  const stateChangeListeners = new Set();
+  let lastPublishedStateKey = "";
+
+  const getStableStateSnapshot = () => {
+    const state = player.getState();
+    return {
+      phase: state.phase,
+      hasTrackLoaded: Boolean(state.hasTrackLoaded),
+      isPlaying: state.phase === PLAYER_PHASES.PLAYING,
+      trackLabel: typeof state.trackLabel === "string" ? state.trackLabel : "",
+      errorMessage: typeof state.errorMessage === "string" ? state.errorMessage : "",
+    };
+  };
+
+  const publishStateIfChanged = () => {
+    const snapshot = getStableStateSnapshot();
+    const nextKey = JSON.stringify(snapshot);
+
+    if (nextKey === lastPublishedStateKey) {
+      return;
+    }
+
+    lastPublishedStateKey = nextKey;
+
+    for (const listener of stateChangeListeners) {
+      try {
+        listener(snapshot);
+      } catch (error) {
+        console.error("[VizuPlayer state listener error]", error);
+      }
+    }
+  };
 
   const renderAnalysisIfChanged = (values) => {
     const safeValues = sanitizeAnalysis(values);
@@ -161,6 +194,7 @@ export async function bootstrap(options = {}) {
     player.setPhase(phase);
     setStatusForPhase(phase, statusOverride);
     syncControls();
+    publishStateIfChanged();
   };
 
   const setErrorPhase = (error, { keepTrackLoaded = false } = {}) => {
@@ -172,6 +206,7 @@ export async function bootstrap(options = {}) {
     setAnalysis(ZERO_ANALYSIS);
     ui.setStatus(message);
     syncControls();
+    publishStateIfChanged();
 
     return message;
   };
@@ -200,6 +235,7 @@ export async function bootstrap(options = {}) {
         setAnalysis(ZERO_ANALYSIS);
         setStatusForPhase(PLAYER_PHASES.ENDED);
         syncControls();
+        publishStateIfChanged();
         logger.info("playback-ended", { source: audioEngine.getCurrentSource() });
       });
 
@@ -454,6 +490,15 @@ export async function bootstrap(options = {}) {
       applyPhase(PLAYER_PHASES.IDLE, "nothing to stop");
       return { status: "ignored" };
     },
+
+    async [API_COMMANDS.UNLOAD]() {
+      invalidatePendingLoads();
+      player.resetToIdle();
+      setAnalysis(ZERO_ANALYSIS);
+      applyPhase(PLAYER_PHASES.IDLE, "unloaded");
+      logger.info("runtime-unloaded");
+      return { status: "unloaded" };
+    },
   };
 
   const executeCommand = async (command, payload = {}) => {
@@ -537,6 +582,8 @@ export async function bootstrap(options = {}) {
       play: () => executeCommand(API_COMMANDS.PLAY),
       pause: () => executeCommand(API_COMMANDS.PAUSE),
       stop: () => executeCommand(API_COMMANDS.STOP),
+      unload: () => executeCommand(API_COMMANDS.UNLOAD),
+      loadTrack: (url) => executeCommand(API_COMMANDS.LOAD_URL_TRACK, { url }),
       loadDemoTrack: (url) => executeCommand(API_COMMANDS.LOAD_URL_TRACK, { url }),
       loadBundledDemoTrack: () => executeCommand(API_COMMANDS.LOAD_BUNDLED_DEMO_TRACK),
       loadLocalFile: (file) => executeCommand(API_COMMANDS.LOAD_LOCAL_FILE, { file }),
@@ -544,10 +591,24 @@ export async function bootstrap(options = {}) {
     play: () => executeCommand(API_COMMANDS.PLAY),
     pause: () => executeCommand(API_COMMANDS.PAUSE),
     stop: () => executeCommand(API_COMMANDS.STOP),
+    unload: () => executeCommand(API_COMMANDS.UNLOAD),
+    loadTrack: (url) => executeCommand(API_COMMANDS.LOAD_URL_TRACK, { url }),
     loadDemoTrack: (url) => executeCommand(API_COMMANDS.LOAD_URL_TRACK, { url }),
     loadBundledDemoTrack: () => executeCommand(API_COMMANDS.LOAD_BUNDLED_DEMO_TRACK),
     loadLocalFile: (file) => executeCommand(API_COMMANDS.LOAD_LOCAL_FILE, { file }),
-    getState: () => player.getState(),
+    getState: () => getStableStateSnapshot(),
+    onStateChange: (listener) => {
+      if (typeof listener !== "function") {
+        throw new Error("onStateChange listener must be a function.");
+      }
+
+      stateChangeListeners.add(listener);
+      listener(getStableStateSnapshot());
+
+      return () => {
+        stateChangeListeners.delete(listener);
+      };
+    },
     getAnalysis: () => ({ ...currentAnalysis }),
     audioEngine,
     ui,
@@ -566,4 +627,3 @@ if (!globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__) {
     console.error("Failed to bootstrap VizuPlayer", error);
   });
 }
-

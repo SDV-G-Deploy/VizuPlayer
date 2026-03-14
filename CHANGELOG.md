@@ -84,3 +84,26 @@ All notable changes to this project will be documented in this file.
 - `node --check scripts/regression/command-phase-regression.mjs`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
 
+
+### Added (Thin Facade Pass)
+
+- Added `unload` command orchestration path in `src/core/app.js` and exposed it on `window.vizuPlayer` (`unload()` + `commands.unload()`).
+- Added `onStateChange(listener)` public API with unsubscribe return contract and stable snapshot payloads.
+- Added canonical `loadTrack(url)` alias over the existing URL/demo load path (`window.vizuPlayer.loadTrack` and `window.vizuPlayer.commands.loadTrack`).
+
+### Changed (Thin Facade Pass)
+
+- Public `getState()` in `src/core/app.js` now returns a stable contract snapshot only:
+  - `phase`
+  - `hasTrackLoaded`
+  - `isPlaying`
+  - `trackLabel`
+  - `errorMessage`
+- State listeners are emitted on runtime phase/state transitions and error transitions without rich event payloads.
+- Legacy/deep API surface (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internal refs) is retained as temporary compatibility surface and not promoted as canonical contract.
+
+### Validated (Thin Facade Pass)
+
+- `node --check src/core/app.js`
+- `node --check scripts/regression/command-phase-regression.mjs`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`

@@ -38,11 +38,17 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - added deterministic headless command/phase regression harness (`scripts/regression/command-phase-regression.mjs`)
   - covered initial/bootstrap, load/play/pause/stop/stop-loading, latest-wins, stale-completion suppression, ended-stop guard, and UI/API parity path assumptions
   - local regression harness baseline result: 10/10 PASS
+- Thin facade implementation pass (integration API shaping):
+  - added canonical facade subset on `window.vizuPlayer`: `play()`, `pause()`, `stop()`, `loadTrack(url)`, `unload()`, `getState()`, `onStateChange()`
+  - added orchestration-backed `unload()` reset path to force runtime back to `idle`
+  - added stable public state snapshot contract and listener subscribe/unsubscribe semantics
+  - retained legacy/deep refs (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internal refs) as temporary compatibility surface
+  - expanded regression harness coverage for thin-facade behavior; local result: 13/13 PASS
 
 ## Active Next
 
+- Run an independent audit-pass focused on thin-facade contract conformance (`loadTrack`, `unload`, `getState`, `onStateChange`).
 - Keep the regression harness green as the lifecycle/load baseline safety net.
-- Continue integration API shaping for game consumers on top of stabilized lifecycle behavior.
 
 ## Milestones
 
@@ -51,4 +57,3 @@ Build a reusable web music engine that can run standalone and serve as the audio
 - M3: Visualization and timing sync basics
 - M4: Integration API for game clients
 - M5: Hardening and packaging
-

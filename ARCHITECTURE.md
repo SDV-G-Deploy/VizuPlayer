@@ -44,6 +44,9 @@ High-level architecture notes for the VizuPlayer engine.
   - serializes load requests with latest-wins semantics
   - suppresses stale load completion commits
   - aborts active in-flight load wait on stop invalidation and superseding latest-load requests
+  - provides canonical thin public facade for game consumers (`play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`)
+  - emits stable snapshot-based state updates via `onStateChange(listener) -> unsubscribe`
+  - keeps legacy/deep runtime fields as temporary compatibility surface (not canonical API contract)
   - drives phase-derived status and control behavior
   - runs one render loop for metrics + visualizer
   - exports an injectable `bootstrap(options)` seam used by deterministic headless regression checks while preserving default browser auto-bootstrap behavior
@@ -52,7 +55,7 @@ High-level architecture notes for the VizuPlayer engine.
   - receives zero/decayed analysis during non-playing phases to prevent stale reactive visuals
 - `scripts/regression/command-phase-regression.mjs`:
   - lightweight Node harness (no external framework)
-  - validates command/phase transitions and race-sensitive lifecycle boundaries against the stabilized Stage 3 baseline
+  - validates command/phase transitions, facade state subscriptions, and race-sensitive lifecycle boundaries against the stabilized Stage 3 baseline
 
 ## Known Constraints
 
@@ -67,4 +70,3 @@ High-level architecture notes for the VizuPlayer engine.
 - How far to expand regression coverage beyond the current lightweight baseline without introducing heavy test infrastructure
 - API surface for external game runtime control contracts
 - Performance limits for per-frame analysis + rendering under heavier scenes
-
