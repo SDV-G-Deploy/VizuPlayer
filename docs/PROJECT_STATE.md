@@ -2,12 +2,12 @@
 
 ## Current Focus
 
-Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pass, manual browser smoke, and post-fix re-audit.
+Flagship product-surface UX/UI reframe is completed in index.html while lifecycle/load baseline guarantees remain accepted and unchanged.
 
 ## Current Stage
 
 - Stage: 3 - Lifecycle/load stable baseline accepted
-- Date: 2026-03-14
+- Date: 2026-03-15
 
 ## Implemented In This Pass
 
@@ -132,3 +132,25 @@ Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pa
   - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
   - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)
 - Pending: manual track-by-track visual acceptance for final taste-level sign-off.
+
+
+## 2026-03-15 Update (Flagship Product Surface Reframe)
+
+- Completed a broad product UX/UI reframe in `index.html` to shift the page from demo-bench feel to standalone product surface.
+- Replaced generic "music-reactive player" framing with experience-first hero positioning and clearer value communication.
+- Made the first-screen user flow explicit with 3 visible launch scenarios:
+  - primary: try demo
+  - secondary: upload your track
+  - secondary: paste audio URL
+- Reframed controls language and hierarchy around `Now Playing` + session actions.
+- Demoted diagnostics/debug presentation into a secondary advanced block while preserving all analysis bindings.
+- Preserved baseline safety constraints:
+  - no `src/audio/*` changes
+  - no lifecycle/loading orchestration changes
+  - no integration facade contract changes
+- Validation completed:
+  - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
+  - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)
+- Pending:
+  - manual in-browser UX acceptance across desktop/mobile breakpoints
+  - copy/tone micro-tuning after interactive review

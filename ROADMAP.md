@@ -1,4 +1,4 @@
-﻿# ROADMAP
+# ROADMAP
 
 ## Vision
 
@@ -74,22 +74,32 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - reduced per-frame render complexity by cutting particle counts, lowering spectrum-corona segment density, and removing high-frequency curve clutter
   - constrained changes to `src/visual/visualizer.js`, `src/visual/nodeNetwork.js`, and `index.html` styling
   - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
+- Flagship Product Surface Reframe pass:
+  - rebuilt `index.html` into a standalone product-first composition instead of a tool/demo bench layout
+  - replaced generic hero copy with product positioning focused on the listening-session experience
+  - introduced explicit first-screen launch scenarios:
+    - primary: try demo
+    - secondary: upload your track
+    - secondary: paste audio URL
+  - reframed controls language toward `Now Playing` and session flow semantics
+  - demoted diagnostics to an explicitly secondary advanced `<details>` block while preserving all runtime-bound ids
+  - preserved audio lifecycle/loading/integration contracts (no `src/audio/*` or facade changes)
+  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
 ## Active Next
 
-- Execute manual visual validation of the Cosmic Beauty Reframe on 4 target scenarios:
-  - bass-heavy track
-  - mid-rich / vocal / synth-rich track
-  - treble-bright track
-  - pause / resume behavior
-- Capture any targeted follow-up tuning notes only after track-by-track visual review.
-- Keep the regression harness green as the lifecycle/load baseline safety net.
+- Run manual browser UX validation of the new flagship surface on desktop and mobile breakpoints:
+  - first-action clarity (demo primary path)
+  - launch-flow comprehension for upload/URL options
+  - hero-stage dominance versus support-column balance
+- Collect any copy/tone refinements after interactive review (without widening into audio/API scope).
+- Keep the regression harness green as the lifecycle/load baseline safety net for all future UI passes.
 
 ## Milestones
-
 - M1: Foundation and structure
 - M2: Playback + analysis MVP
 - M3: Visualization and timing sync basics
 - M4: Integration API for game clients
 - M5: Hardening and packaging
+
 
 

@@ -169,3 +169,24 @@
   - hero prominence of visualizer
   - diagnostics no longer visually dominating
   - cohesion between status, controls, and visual scene at desktop/mobile sizes
+
+## 2026-03-15 (Flagship Product Surface Reframe Pass)
+
+- Executed a broad product UX/UI reframe in `index.html` with scope constrained to page shell/copy/hierarchy/layout.
+- Repositioned the page from demo-bench feel to standalone product surface:
+  - new experience-led hero copy
+  - clearer first-action guidance
+  - stronger visual shell cohesion
+- Made launch flow explicit on first screen with 3 scenarios:
+  - primary: `Try the demo`
+  - secondary: `Upload your track`
+  - secondary: `Paste audio URL`
+- Reframed controls language around listening session semantics (`Now Playing`, `Play Session`) and moved diagnostics into a clearly secondary advanced block.
+- Preserved all runtime-critical DOM ids and avoided any changes in:
+  - `src/audio/*`
+  - lifecycle/load orchestration internals
+  - integration facade/API contracts
+- Validation completed:
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+  - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+- Manual visual/browser acceptance remains pending for desktop/mobile interaction polish.

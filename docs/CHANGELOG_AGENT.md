@@ -122,3 +122,18 @@
   - `node --check scripts/regression/unload-source-reporting-regression.mjs`
   - `node scripts/regression/unload-source-reporting-regression.mjs`
   - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
+
+### Updated (Flagship Product Surface Reframe Pass)
+
+- Rebuilt `index.html` as a product-first standalone surface instead of a technical demo/control bench layout.
+- Reframed positioning/copy to describe the listening experience and first-action intent.
+- Added explicit first-screen launch options with one clear primary path:
+  - primary: try demo
+  - secondary: upload track
+  - secondary: paste audio URL
+- Reworked controls language toward `Now Playing` / session semantics and reduced technical card naming.
+- Demoted diagnostics to a secondary advanced block so debug data no longer competes with the hero experience.
+- Preserved all JS/runtime DOM id bindings and intentionally avoided audio/lifecycle/API contract scope.
+- Validation completed:
+  - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
+  - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)

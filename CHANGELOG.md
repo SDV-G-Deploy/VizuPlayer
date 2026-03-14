@@ -239,3 +239,20 @@ All notable changes to this project will be documented in this file.
 - `node --check src/visual/nodeNetwork.js`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+
+### Changed (Flagship Product Surface Reframe)
+
+- Reworked `index.html` from a demo-bench style control layout into a standalone product-facing surface.
+- Replaced generic positioning copy with experience-led hero messaging centered on listening sessions.
+- Made first-screen launch flow explicit with three visible scenarios and one primary CTA:
+  - try demo (primary)
+  - upload your track
+  - paste audio URL
+- Reframed controls language from technical source/playback framing to `Now Playing` and session semantics.
+- Demoted diagnostics to a clearly secondary advanced `<details>` block while preserving all runtime-required DOM ids.
+- Kept scope constrained to UI shell/copy/layout; no changes to `src/audio/*`, lifecycle orchestration, or integration facade contracts.
+
+### Validated (Flagship Product Surface Reframe)
+
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`

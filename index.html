@@ -1,24 +1,31 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VizuPlayer</title>
+  <title>VizuPlayer | Listening Sessions</title>
   <style>
     :root {
       color-scheme: dark;
-      font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
-      --text-main: #eaf5ff;
-      --text-soft: rgba(208, 230, 248, 0.76);
-      --panel-bg-top: rgba(7, 13, 31, 0.84);
-      --panel-bg-bottom: rgba(3, 7, 19, 0.9);
-      --panel-border: rgba(118, 184, 236, 0.22);
-      --card-bg: rgba(7, 15, 34, 0.62);
-      --card-border: rgba(123, 187, 238, 0.2);
-      --accent: #88d5ff;
-      --accent-strong: #d2f2ff;
-      --button-bg: rgba(20, 73, 132, 0.4);
-      --button-bg-hover: rgba(38, 112, 182, 0.58);
+      font-family: "Sora", "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+      --page-bg: #040911;
+      --text-main: #f3f8ff;
+      --text-soft: rgba(221, 236, 252, 0.76);
+      --text-muted: rgba(182, 210, 235, 0.66);
+      --shell-top: rgba(10, 19, 42, 0.9);
+      --shell-bottom: rgba(5, 10, 24, 0.94);
+      --shell-border: rgba(142, 199, 244, 0.24);
+      --card-bg: rgba(10, 20, 44, 0.56);
+      --card-border: rgba(145, 201, 244, 0.22);
+      --primary: #8cddff;
+      --primary-strong: #4eb8ff;
+      --primary-border: rgba(169, 221, 255, 0.62);
+      --button-bg: rgba(28, 76, 140, 0.46);
+      --button-bg-hover: rgba(46, 114, 192, 0.62);
+      --button-primary-top: #8de4ff;
+      --button-primary-bottom: #3b93ff;
+      --button-primary-text: #021021;
+      --shadow-soft: 0 22px 48px rgba(2, 9, 24, 0.52);
     }
 
     * {
@@ -31,87 +38,206 @@
       padding: 24px;
       color: var(--text-main);
       background:
-        radial-gradient(120% 95% at 50% -14%, rgba(34, 90, 168, 0.42), transparent 58%),
-        radial-gradient(72% 110% at -4% 18%, rgba(24, 74, 146, 0.32), transparent 68%),
-        radial-gradient(82% 110% at 108% 6%, rgba(20, 66, 136, 0.3), transparent 70%),
-        radial-gradient(64% 86% at 66% 22%, rgba(86, 92, 182, 0.16), transparent 74%),
-        linear-gradient(162deg, #02050f 0%, #050a18 43%, #030711 100%);
+        radial-gradient(120% 100% at 50% -20%, rgba(61, 123, 215, 0.32), transparent 58%),
+        radial-gradient(88% 120% at -10% 20%, rgba(30, 86, 168, 0.28), transparent 66%),
+        radial-gradient(80% 110% at 108% 14%, rgba(28, 109, 164, 0.22), transparent 68%),
+        linear-gradient(158deg, #050913 0%, #040915 42%, #03070f 100%);
     }
 
-    .product-shell {
+    .flagship-shell {
       position: relative;
       isolation: isolate;
-      width: min(1240px, 100%);
+      width: min(1280px, 100%);
       margin: 0 auto;
-      padding: 24px;
-      border-radius: 24px;
-      border: 1px solid var(--panel-border);
-      background: linear-gradient(184deg, var(--panel-bg-top), var(--panel-bg-bottom));
+      padding: 22px;
+      border-radius: 28px;
+      border: 1px solid var(--shell-border);
+      background: linear-gradient(184deg, var(--shell-top), var(--shell-bottom));
       box-shadow:
-        0 30px 70px rgba(1, 5, 15, 0.66),
-        inset 0 1px 0 rgba(180, 228, 255, 0.05);
+        0 36px 78px rgba(1, 6, 16, 0.62),
+        inset 0 1px 0 rgba(192, 232, 255, 0.08);
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 334px);
+      grid-template-columns: minmax(0, 1.7fr) minmax(288px, 0.9fr);
       gap: 18px;
     }
 
-    .product-shell::before {
+    .flagship-shell::before {
       content: "";
       position: absolute;
       inset: 1px;
-      border-radius: 22px;
+      border-radius: 26px;
       pointer-events: none;
       background:
-        radial-gradient(78% 60% at 50% 22%, rgba(58, 138, 214, 0.1), transparent 76%),
-        linear-gradient(180deg, rgba(146, 214, 255, 0.045), transparent 30%);
+        radial-gradient(74% 66% at 46% 0%, rgba(88, 166, 238, 0.12), transparent 70%),
+        linear-gradient(180deg, rgba(188, 227, 255, 0.06), transparent 28%);
       z-index: -1;
     }
 
-    .hero-header {
-      grid-column: 1 / -1;
+    .hero-stage {
       display: grid;
-      gap: 6px;
-      margin-bottom: 2px;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .hero-copy {
+      margin: 0;
+      padding: 2px 2px 4px;
+      display: grid;
+      gap: 8px;
     }
 
     .brand-kicker {
       margin: 0;
-      font-size: 0.74rem;
+      font-size: 0.73rem;
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(163, 220, 255, 0.9);
+      color: rgba(170, 224, 255, 0.92);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.7rem, 2.9vw, 2.34rem);
-      line-height: 1.08;
-      letter-spacing: 0.015em;
-      color: rgba(238, 250, 255, 0.98);
+      max-width: 26ch;
+      font-size: clamp(1.78rem, 3vw, 2.7rem);
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      color: rgba(243, 250, 255, 0.99);
     }
 
     .subtitle {
       margin: 0;
-      max-width: 72ch;
-      color: var(--text-soft);
+      max-width: 66ch;
       font-size: 0.98rem;
-      line-height: 1.45;
+      line-height: 1.5;
+      color: var(--text-soft);
     }
 
-    #player-status {
-      margin: 5px 0 0;
-      width: fit-content;
-      max-width: 100%;
-      padding: 7px 13px;
-      border-radius: 999px;
-      font-size: 0.8rem;
+    .launch-deck {
+      margin: 0;
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(145, 205, 244, 0.24);
+      background:
+        linear-gradient(170deg, rgba(15, 32, 64, 0.72), rgba(8, 17, 35, 0.76)),
+        radial-gradient(120% 160% at 0% 0%, rgba(96, 158, 232, 0.16), transparent 54%);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .launch-title {
+      margin: 0 0 12px;
+      font-size: 0.92rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
-      border: 1px solid rgba(146, 214, 255, 0.38);
-      background: rgba(14, 53, 98, 0.5);
-      color: #daf3ff;
-      box-shadow: inset 0 1px 0 rgba(206, 235, 255, 0.12);
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: rgba(181, 225, 255, 0.9);
+    }
+
+    .launch-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .launch-card {
+      margin: 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      box-shadow: inset 0 1px 0 rgba(192, 230, 255, 0.08);
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .launch-card-primary {
+      border-color: var(--primary-border);
+      background:
+        linear-gradient(170deg, rgba(15, 40, 78, 0.78), rgba(9, 24, 49, 0.78)),
+        radial-gradient(140% 120% at 0% 0%, rgba(131, 213, 255, 0.2), transparent 58%);
+    }
+
+    .launch-step {
+      margin: 0;
+      width: fit-content;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(12, 25, 44, 0.95);
+      background: rgba(173, 227, 255, 0.88);
+    }
+
+    .launch-card h3 {
+      margin: 0;
+      font-size: 1.02rem;
+      line-height: 1.25;
+      letter-spacing: 0.01em;
+    }
+
+    .launch-card p {
+      margin: 0;
+      font-size: 0.83rem;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+
+    input[type="file"],
+    #track-url-input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(150, 205, 245, 0.31);
+      background: rgba(6, 15, 34, 0.72);
+      color: var(--text-main);
+      padding: 10px;
+      font: inherit;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+    }
+
+    button {
+      border: 1px solid rgba(154, 210, 247, 0.38);
+      background: var(--button-bg);
+      color: #eaf7ff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-weight: 650;
+      font-family: inherit;
+      transition:
+        background-color 140ms ease,
+        border-color 140ms ease,
+        transform 140ms ease;
+    }
+
+    .button-primary {
+      color: var(--button-primary-text);
+      border-color: rgba(183, 232, 255, 0.8);
+      background: linear-gradient(180deg, var(--button-primary-top), var(--button-primary-bottom));
+      box-shadow:
+        inset 0 1px 0 rgba(246, 253, 255, 0.56),
+        0 14px 22px rgba(39, 105, 171, 0.33);
+    }
+
+    button:hover:enabled {
+      background: var(--button-bg-hover);
+      border-color: rgba(189, 231, 255, 0.65);
+      transform: translateY(-1px);
+    }
+
+    .button-primary:hover:enabled {
+      background: linear-gradient(180deg, #a8ecff, #54a7ff);
+      border-color: rgba(211, 241, 255, 0.86);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
     }
 
     .visual-stage {
@@ -125,59 +251,66 @@
       isolation: isolate;
       border-radius: 24px;
       overflow: hidden;
-      border: 1px solid rgba(128, 194, 240, 0.36);
-      background: linear-gradient(182deg, rgba(2, 7, 20, 0.99), rgba(1, 4, 14, 0.99));
+      border: 1px solid rgba(140, 200, 245, 0.34);
+      background: linear-gradient(182deg, rgba(3, 8, 21, 0.99), rgba(1, 4, 13, 0.99));
       box-shadow:
-        inset 0 0 0 1px rgba(174, 224, 255, 0.08),
-        inset 0 28px 64px rgba(54, 116, 176, 0.08),
-        0 24px 54px rgba(1, 9, 25, 0.56);
+        inset 0 0 0 1px rgba(179, 226, 255, 0.1),
+        inset 0 30px 68px rgba(54, 125, 189, 0.09),
+        0 28px 56px rgba(2, 10, 28, 0.58);
     }
 
     .visualizer-shell::before,
     .visualizer-shell::after {
       content: "";
       position: absolute;
-      pointer-events: none;
       inset: 0;
+      pointer-events: none;
     }
 
     .visualizer-shell::before {
-      background: radial-gradient(66% 42% at 50% 14%, rgba(114, 204, 248, 0.1), transparent 70%);
+      background: radial-gradient(72% 44% at 50% 10%, rgba(102, 196, 245, 0.11), transparent 70%);
       mix-blend-mode: screen;
     }
 
     .visualizer-shell::after {
-      background: linear-gradient(180deg, rgba(164, 216, 246, 0.04), rgba(40, 84, 136, 0.02) 26%, transparent 56%);
+      background: linear-gradient(180deg, rgba(181, 226, 253, 0.05), rgba(38, 82, 136, 0.03) 24%, transparent 58%);
     }
 
     #visualizer-canvas {
       display: block;
       width: 100%;
-      height: clamp(340px, 58vh, 560px);
+      height: clamp(360px, 60vh, 620px);
     }
 
-    .visualizer-label {
+    .stage-overlay {
       position: absolute;
-      left: 14px;
-      bottom: 12px;
-      padding: 0;
-      border: none;
-      background: none;
-      color: rgba(182, 224, 246, 0.62);
-      font-size: 0.64rem;
-      font-weight: 700;
-      letter-spacing: 0.13em;
-      text-transform: uppercase;
+      left: 16px;
+      right: 16px;
+      bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       pointer-events: none;
     }
 
-    .visualizer-hint {
-      margin: 0 4px;
-      color: rgba(198, 230, 252, 0.74);
-      font-size: 0.88rem;
+    .stage-label {
+      margin: 0;
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(188, 229, 249, 0.68);
     }
 
-    .side-stack {
+    .stage-copy {
+      margin: 0;
+      font-size: 0.8rem;
+      text-align: right;
+      color: rgba(196, 228, 248, 0.72);
+    }
+
+    .support-column {
       display: grid;
       gap: 12px;
       align-content: start;
@@ -190,90 +323,80 @@
       border: 1px solid var(--card-border);
       background: var(--card-bg);
       box-shadow:
-        inset 0 1px 0 rgba(188, 225, 255, 0.07),
-        0 10px 24px rgba(2, 10, 28, 0.24);
-      backdrop-filter: blur(4px);
+        inset 0 1px 0 rgba(190, 226, 253, 0.08),
+        0 12px 28px rgba(2, 10, 27, 0.24);
     }
 
     .control-card h2 {
-      margin: 0 0 10px;
-      font-size: 0.86rem;
+      margin: 0 0 8px;
+      font-size: 0.84rem;
       font-weight: 700;
-      letter-spacing: 0.09em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(186, 229, 255, 0.85);
+      color: rgba(186, 228, 255, 0.88);
     }
 
-    .hint {
-      margin: 8px 0 0;
-      color: rgba(201, 229, 252, 0.66);
-      font-size: 0.82rem;
-      line-height: 1.4;
+    .card-copy {
+      margin: 0 0 10px;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
     }
 
-    .row {
-      display: flex;
-      flex-wrap: wrap;
+    #player-status {
+      margin: 0 0 12px;
+      width: 100%;
+      max-width: 100%;
+      padding: 8px 11px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      border: 1px solid rgba(150, 213, 251, 0.38);
+      background: rgba(14, 53, 98, 0.54);
+      color: #daf3ff;
+      box-shadow: inset 0 1px 0 rgba(211, 237, 255, 0.12);
+    }
+
+    .transport-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
 
-    .row + .row {
-      margin-top: 8px;
+    .hint {
+      margin: 10px 0 0;
+      color: rgba(196, 225, 248, 0.7);
+      font-size: 0.79rem;
+      line-height: 1.4;
     }
 
-    input[type="file"],
-    #track-url-input {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(149, 203, 255, 0.29);
-      background: rgba(3, 11, 27, 0.64);
-      color: var(--text-main);
-      padding: 10px;
-      font: inherit;
-    }
-
-    button {
-      border: 1px solid rgba(149, 204, 255, 0.37);
-      background: var(--button-bg);
-      color: #e7f5ff;
-      border-radius: 10px;
-      padding: 9px 12px;
-      cursor: pointer;
-      font-weight: 650;
-      transition:
-        background-color 130ms ease,
-        border-color 130ms ease,
-        transform 130ms ease;
-    }
-
-    button:hover:enabled {
-      background: var(--button-bg-hover);
-      border-color: rgba(182, 228, 255, 0.6);
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
+    .benefit-list {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      display: grid;
+      gap: 4px;
     }
 
     .diagnostics {
-      border: 1px solid rgba(129, 184, 235, 0.22);
+      border: 1px solid rgba(125, 178, 225, 0.2);
       border-radius: 14px;
-      background: rgba(5, 13, 29, 0.5);
+      background: rgba(4, 12, 28, 0.44);
       padding: 10px 12px 12px;
-      box-shadow: inset 0 1px 0 rgba(184, 217, 244, 0.06);
+      box-shadow: inset 0 1px 0 rgba(181, 216, 244, 0.05);
     }
 
     .diagnostics summary {
       cursor: pointer;
       list-style: none;
-      font-size: 0.79rem;
-      letter-spacing: 0.08em;
+      font-size: 0.76rem;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
       font-weight: 700;
-      color: rgba(165, 212, 253, 0.82);
+      color: rgba(153, 204, 245, 0.78);
     }
 
     .diagnostics summary::-webkit-details-marker {
@@ -288,18 +411,18 @@
     }
 
     .metric {
-      border: 1px solid rgba(119, 172, 224, 0.22);
+      border: 1px solid rgba(114, 169, 221, 0.2);
       border-radius: 10px;
       padding: 8px;
-      background: rgba(6, 16, 36, 0.58);
+      background: rgba(7, 17, 38, 0.56);
     }
 
     .metric-name {
       display: block;
-      font-size: 0.72rem;
+      font-size: 0.71rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: rgba(196, 226, 255, 0.72);
+      color: rgba(192, 225, 251, 0.7);
       margin-bottom: 4px;
     }
 
@@ -307,42 +430,70 @@
       font-size: 1rem;
       font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
       font-weight: 700;
-      color: #daf2ff;
+      color: rgba(216, 240, 255, 0.95);
     }
 
     #analysis-output {
       margin: 8px 0 0;
       padding: 10px;
       border-radius: 10px;
-      border: 1px solid rgba(118, 173, 236, 0.24);
-      background: rgba(2, 9, 23, 0.58);
+      border: 1px solid rgba(118, 173, 236, 0.22);
+      background: rgba(4, 11, 26, 0.62);
       font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
-      font-size: 0.78rem;
-      color: rgba(193, 222, 252, 0.76);
+      font-size: 0.76rem;
+      color: rgba(188, 220, 248, 0.76);
       white-space: pre-wrap;
     }
 
-    @media (max-width: 980px) {
-      .product-shell {
+    @media (max-width: 1120px) {
+      .flagship-shell {
         grid-template-columns: 1fr;
       }
 
-      .side-stack {
+      .support-column {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .support-column .diagnostics {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .launch-grid {
         grid-template-columns: 1fr;
       }
 
       #visualizer-canvas {
-        height: clamp(280px, 46vh, 420px);
+        height: clamp(300px, 52vh, 480px);
       }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 700px) {
       body {
         padding: 14px;
       }
 
-      .product-shell {
+      .flagship-shell {
         padding: 16px;
+        gap: 12px;
+      }
+
+      .launch-deck {
+        padding: 12px;
+      }
+
+      .support-column {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-overlay {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .stage-copy {
+        text-align: left;
       }
 
       .analysis-grid {
@@ -352,54 +503,83 @@
   </style>
 </head>
 <body>
-  <main class="product-shell">
-    <header class="hero-header">
-      <p class="brand-kicker">VizuPlayer</p>
-      <h1>Music-Reactive Player</h1>
-      <p class="subtitle">Load a local track or demo URL, then drive the visual field with real-time playback.</p>
-      <p id="player-status">Status: waiting for track</p>
-    </header>
+  <main class="flagship-shell">
+    <section class="hero-stage" aria-label="VizuPlayer listening experience">
+      <header class="hero-copy">
+        <p class="brand-kicker">VizuPlayer Standalone</p>
+        <h1>Turn every track into a cinematic listening session.</h1>
+        <p class="subtitle">
+          This is not a tech bench. It is your launch surface: choose a source, press play, and let the stage react to every beat.
+        </p>
+      </header>
 
-    <section class="visual-stage" aria-label="Reactive visual field">
-      <div class="visualizer-shell">
-        <canvas id="visualizer-canvas" width="780" height="260" aria-label="Audio visualizer canvas"></canvas>
-        <span class="visualizer-label">Reactive Field</span>
-      </div>
-      <p class="visualizer-hint">Quiet when idle, expressive when the track is active.</p>
-    </section>
+      <section class="launch-deck" aria-label="Session launch options">
+        <h2 class="launch-title">Choose your first move</h2>
+        <div class="launch-grid">
+          <article class="launch-card launch-card-primary" aria-label="Try demo">
+            <p class="launch-step">Primary</p>
+            <h3>Try the demo</h3>
+            <p>Instant start with a curated track that showcases the full visual session.</p>
+            <button id="load-demo-button" class="button-primary">Launch Demo Session</button>
+          </article>
 
-    <aside class="side-stack" aria-label="Playback controls and sources">
-      <section class="control-card" aria-label="Local and URL source">
-        <h2>Source</h2>
-        <div class="row">
-          <input id="audio-file-input" type="file" accept="audio/*" />
-        </div>
-        <p class="hint">Local file is the primary source path.</p>
-        <div class="row">
-          <input
-            id="track-url-input"
-            type="text"
-            placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
-            value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
-          />
-        </div>
-        <div class="row">
-          <button id="load-url-button">Load URL</button>
-          <button id="load-demo-button">Load Demo</button>
+          <article class="launch-card" aria-label="Upload your track">
+            <p class="launch-step">Option 2</p>
+            <h3>Upload your track</h3>
+            <p>Bring your own local audio file and run a personal visual listening pass.</p>
+            <input id="audio-file-input" type="file" accept="audio/*" />
+          </article>
+
+          <article class="launch-card" aria-label="Paste audio URL">
+            <p class="launch-step">Option 3</p>
+            <h3>Paste audio URL</h3>
+            <p>Load a direct URL or asset path and start playback from a hosted source.</p>
+            <input
+              id="track-url-input"
+              type="text"
+              placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+              value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
+            />
+            <button id="load-url-button">Load from URL</button>
+          </article>
         </div>
       </section>
 
-      <section class="control-card" aria-label="Playback controls">
-        <h2>Playback</h2>
-        <div class="row">
-          <button id="play-button" disabled>Play</button>
+      <section class="visual-stage" aria-label="Reactive visual field">
+        <div class="visualizer-shell">
+          <canvas id="visualizer-canvas" width="780" height="260" aria-label="Audio visualizer canvas"></canvas>
+          <div class="stage-overlay">
+            <span class="stage-label">Live Reactive Stage</span>
+            <p class="stage-copy">Bass, mids, treble, and energy shape this scene in real time.</p>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="support-column" aria-label="Now playing and session controls">
+      <section class="control-card" aria-label="Now playing controls">
+        <h2>Now Playing</h2>
+        <p class="card-copy">After loading a source, hit play to launch the listening experience.</p>
+        <p id="player-status">Status: waiting for track</p>
+        <div class="transport-row">
+          <button id="play-button" disabled>Play Session</button>
           <button id="pause-button" disabled>Pause</button>
           <button id="stop-button" disabled>Stop</button>
         </div>
+        <p class="hint">Quick path: launch demo first, then switch to your own track.</p>
       </section>
 
-      <details class="diagnostics" aria-label="Live analysis diagnostics">
-        <summary>Signal Diagnostics</summary>
+      <section class="control-card" aria-label="Session value">
+        <h2>Why Try It</h2>
+        <ul class="benefit-list">
+          <li>One-click start with a ready-to-play demo.</li>
+          <li>Works with local uploads and hosted audio links.</li>
+          <li>Built for immersive listening and future game integration.</li>
+        </ul>
+      </section>
+
+      <details class="diagnostics" aria-label="Advanced signal diagnostics">
+        <summary>Advanced Signal Diagnostics</summary>
         <div class="analysis-grid">
           <div class="metric">
             <span class="metric-name">Bass</span>
@@ -426,4 +606,3 @@
   <script type="module" src="./src/core/app.js"></script>
 </body>
 </html>
-
