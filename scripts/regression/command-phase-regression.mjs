@@ -351,6 +351,18 @@ function assertPhase(runtime, expected, message) {
 
 const STABLE_PHASES = ["idle", "loading", "ready", "playing", "paused", "ended", "error"];
 const STABLE_STATE_KEYS = ["phase", "hasTrackLoaded", "isPlaying", "trackLabel", "errorMessage"];
+const PUBLIC_FACADE_KEYS = ["play", "pause", "stop", "loadTrack", "unload", "getState", "onStateChange"];
+const FORBIDDEN_PUBLIC_KEYS = [
+  "commands",
+  "loadDemoTrack",
+  "loadBundledDemoTrack",
+  "loadLocalFile",
+  "getAnalysis",
+  "audioEngine",
+  "ui",
+  "visualizer",
+  "config",
+];
 
 function assertStableStateSnapshot(snapshot, message) {
   assert.deepEqual(
@@ -376,8 +388,27 @@ async function scenarioInitialBootstrap() {
   assert.equal(fakeUI.controls.canPlay, false, "Play should be disabled initially");
   assert.equal(fakeUI.controls.canPause, false, "Pause should be disabled initially");
   assert.equal(fakeUI.controls.canStop, false, "Stop should be disabled initially");
+  assert.deepEqual(
+    Object.keys(runtime).sort(),
+    [...PUBLIC_FACADE_KEYS].sort(),
+    "Public facade should expose only canonical methods",
+  );
+
+  for (const key of FORBIDDEN_PUBLIC_KEYS) {
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(runtime, key),
+      false,
+      "Public facade should not expose forbidden key: " + key,
+    );
+  }
+
   assert.equal(typeof runtime.onStateChange, "function", "Public facade should expose onStateChange");
   assert.equal(fakeWindow.vizuPlayer, runtime, "Runtime should be exposed on window target");
+  assert.equal(
+    typeof fakeWindow.__VIZUPLAYER_DEBUG__,
+    "object",
+    "Debug namespace should be exposed separately for unstable internals",
+  );
 }
 
 async function scenarioLoadToReady() {
@@ -389,9 +420,9 @@ async function scenarioLoadToReady() {
   assertPhase(runtime, "loading", "Phase should enter loading after load command");
 
   fakeEngine.resolveLoad("track://load-ready");
-  const result = await loadPromise;
+  const loadResult = await loadPromise;
 
-  assert.equal(result.status, "loaded", "Load should resolve with loaded status");
+  assert.equal(loadResult, undefined, "Public loadTrack should not expose internal status payload");
   const state = runtime.getState();
   assertStableStateSnapshot(state, "Loaded state should match stable contract");
   assert.equal(state.phase, "ready", "Phase should be ready after successful load");
@@ -402,14 +433,14 @@ async function scenarioLoadToReady() {
 async function scenarioPlayFromReady() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadPromise = runtime.loadDemoTrack("track://play-ready");
+  const loadPromise = runtime.loadTrack("track://play-ready");
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://play-ready");
   await loadPromise;
 
-  const result = await runtime.play();
+  const playResult = await runtime.play();
 
-  assert.equal(result.status, "playing", "Play command should return playing status");
+  assert.equal(playResult, undefined, "Public play should not expose internal status payload");
   assertPhase(runtime, "playing", "Phase should be playing after play command");
   assert.equal(fakeEngine.playCallCount, 1, "Audio engine play should be called once");
 }
@@ -417,15 +448,15 @@ async function scenarioPlayFromReady() {
 async function scenarioPauseFromPlaying() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadPromise = runtime.loadDemoTrack("track://pause-flow");
+  const loadPromise = runtime.loadTrack("track://pause-flow");
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://pause-flow");
   await loadPromise;
   await runtime.play();
 
-  const result = await runtime.pause();
+  const pauseResult = await runtime.pause();
 
-  assert.equal(result.status, "paused", "Pause command should return paused status");
+  assert.equal(pauseResult, undefined, "Public pause should not expose internal status payload");
   assertPhase(runtime, "paused", "Phase should be paused after pause command");
   assert.equal(fakeEngine.pauseCallCount, 1, "Audio engine pause should be called once");
 }
@@ -433,15 +464,15 @@ async function scenarioPauseFromPlaying() {
 async function scenarioStopFromPlaying() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadPromise = runtime.loadDemoTrack("track://stop-playing");
+  const loadPromise = runtime.loadTrack("track://stop-playing");
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://stop-playing");
   await loadPromise;
   await runtime.play();
 
-  const result = await runtime.stop();
+  const stopResult = await runtime.stop();
 
-  assert.equal(result.status, "stopped", "Stop from playing should return stopped status");
+  assert.equal(stopResult, undefined, "Public stop should not expose internal status payload");
   const state = runtime.getState();
   assert.equal(state.phase, "ready", "Stop from playing should return to ready");
   assert.equal(state.hasTrackLoaded, true, "Stop from playing should retain loaded track metadata");
@@ -451,16 +482,15 @@ async function scenarioStopFromPlaying() {
 async function scenarioStopDuringLoading() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadPromise = runtime.loadDemoTrack("track://stop-during-loading");
+  const loadPromise = runtime.loadTrack("track://stop-during-loading");
   await waitForMicrotaskTurn();
 
   assertPhase(runtime, "loading", "Phase should be loading before stop during loading");
 
   const stopResult = await runtime.stop();
-  const loadResult = await loadPromise;
+  await loadPromise;
 
-  assert.equal(stopResult.status, "stopped-loading", "Stop during loading should return stopped-loading status");
-  assert.equal(loadResult.status, "stale", "Aborted in-flight load should settle as stale");
+  assert.equal(stopResult, undefined, "Public stop should not expose internal status payload while loading");
   const state = runtime.getState();
   assert.equal(state.phase, "idle", "Stop during loading should reset phase to idle");
   assert.equal(state.hasTrackLoaded, false, "Stop during loading should clear loaded-track state");
@@ -478,7 +508,7 @@ async function scenarioUnloadResetsRuntimeToIdle() {
 
   const unloadResult = await runtime.unload();
 
-  assert.equal(unloadResult.status, "unloaded", "Unload should return unloaded status");
+  assert.equal(unloadResult, undefined, "Public unload should not expose internal status payload");
   const state = runtime.getState();
   assertStableStateSnapshot(state, "Unload state should match stable contract");
   assert.equal(state.phase, "idle", "Unload should force idle phase");
@@ -497,10 +527,9 @@ async function scenarioUnloadDuringLoading() {
   assertPhase(runtime, "loading", "Phase should be loading before unload during loading");
 
   const unloadResult = await runtime.unload();
-  const loadResult = await loadPromise;
+  await loadPromise;
 
-  assert.equal(unloadResult.status, "unloaded", "Unload during loading should return unloaded status");
-  assert.equal(loadResult.status, "stale", "In-flight load should settle as stale after unload");
+  assert.equal(unloadResult, undefined, "Public unload should not expose internal status payload while loading");
   const state = runtime.getState();
   assertStableStateSnapshot(state, "Unload-during-loading state should match stable contract");
   assert.equal(state.phase, "idle", "Unload during loading should end in idle");
@@ -511,19 +540,19 @@ async function scenarioUnloadDuringLoading() {
 async function scenarioLatestWinsRapidLoadAB() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadA = runtime.loadDemoTrack("track://rapid-A");
+  const loadA = runtime.loadTrack("track://rapid-A");
   await waitForMicrotaskTurn();
 
-  const loadB = runtime.loadDemoTrack("track://rapid-B");
+  const loadB = runtime.loadTrack("track://rapid-B");
   await waitForMicrotaskTurn();
 
-  const resultA = await loadA;
-  assert.equal(resultA.status, "stale", "Superseded load A should resolve as stale");
+  const loadAResult = await loadA;
+  assert.equal(loadAResult, undefined, "Superseded public loadTrack should resolve without status payload");
 
   fakeEngine.resolveLoad("track://rapid-B");
-  const resultB = await loadB;
+  const loadBResult = await loadB;
+  assert.equal(loadBResult, undefined, "Latest public loadTrack should resolve without status payload");
 
-  assert.equal(resultB.status, "loaded", "Latest load B should resolve as loaded");
   const state = runtime.getState();
   assert.equal(state.phase, "ready", "Final phase should be ready after latest load completion");
   assert.equal(state.trackLabel, "track://rapid-B", "Final loaded track should be B");
@@ -534,20 +563,20 @@ async function scenarioStaleCompletionIgnored() {
     fakeEngineOptions: { ignoreAbortForUrls: ["track://stale-A"] },
   });
 
-  const loadA = runtime.loadDemoTrack("track://stale-A");
+  const loadA = runtime.loadTrack("track://stale-A");
   await waitForMicrotaskTurn();
 
-  const loadB = runtime.loadDemoTrack("track://stale-B");
+  const loadB = runtime.loadTrack("track://stale-B");
   await waitForMicrotaskTurn();
 
   fakeEngine.resolveLoad("track://stale-A");
-  const resultA = await loadA;
-  assert.equal(resultA.status, "stale", "Late completion for A should be marked stale when B is newer");
+  const loadAResult = await loadA;
+  assert.equal(loadAResult, undefined, "Stale public loadTrack should resolve without status payload");
 
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://stale-B");
-  const resultB = await loadB;
-  assert.equal(resultB.status, "loaded", "Newer request B should complete as loaded");
+  const loadBResult = await loadB;
+  assert.equal(loadBResult, undefined, "Committed public loadTrack should resolve without status payload");
 
   const state = runtime.getState();
   assert.equal(state.trackLabel, "track://stale-B", "Stale completion must not overwrite newer track metadata");
@@ -557,7 +586,7 @@ async function scenarioStaleCompletionIgnored() {
 async function scenarioEndedDoesNotOverwriteExplicitStop() {
   const { runtime, fakeEngine } = await createHarness();
 
-  const loadPromise = runtime.loadDemoTrack("track://ended-guard");
+  const loadPromise = runtime.loadTrack("track://ended-guard");
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://ended-guard");
   await loadPromise;
@@ -603,12 +632,10 @@ async function scenarioOnStateChangeSubscribeUnsubscribe() {
 async function scenarioUiApiParityEntrypoints() {
   const { runtime, fakeEngine, fakeUI } = await createHarness();
 
-  const loadPromise = runtime.commands.loadDemoTrack("track://parity");
+  const loadPromise = runtime.loadTrack("track://parity");
   await waitForMicrotaskTurn();
   fakeEngine.resolveLoad("track://parity");
-  const loadResult = await loadPromise;
-
-  assert.equal(loadResult.status, "loaded", "Command-map load should resolve as loaded");
+  await loadPromise;
 
   await fakeUI.trigger("onPlay");
   assertPhase(runtime, "playing", "UI play handler should use shared command orchestration");
@@ -616,8 +643,8 @@ async function scenarioUiApiParityEntrypoints() {
   await runtime.pause();
   assertPhase(runtime, "paused", "Public API pause should transition the same runtime state");
 
-  await runtime.commands.play();
-  assertPhase(runtime, "playing", "Command-map play should transition the same runtime state");
+  await runtime.play();
+  assertPhase(runtime, "playing", "Public API play should transition the same runtime state");
 
   await fakeUI.trigger("onStop");
   assertPhase(runtime, "ready", "UI stop handler should share stop orchestration with API callers");

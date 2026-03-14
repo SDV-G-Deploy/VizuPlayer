@@ -576,7 +576,35 @@ export async function bootstrap(options = {}) {
     visualizer.destroy();
   });
 
-  const runtimeApi = {
+  const subscribeToStateChanges = (listener) => {
+    if (typeof listener !== "function") {
+      throw new Error("onStateChange listener must be a function.");
+    }
+
+    stateChangeListeners.add(listener);
+    listener(getStableStateSnapshot());
+
+    return () => {
+      stateChangeListeners.delete(listener);
+    };
+  };
+
+  const executePublicCommand = async (command, payload = {}) => {
+    await executeCommand(command, payload);
+  };
+
+  const runtimeApi = Object.freeze({
+    play: () => executePublicCommand(API_COMMANDS.PLAY),
+    pause: () => executePublicCommand(API_COMMANDS.PAUSE),
+    stop: () => executePublicCommand(API_COMMANDS.STOP),
+    loadTrack: (url) => executePublicCommand(API_COMMANDS.LOAD_URL_TRACK, { url }),
+    unload: () => executePublicCommand(API_COMMANDS.UNLOAD),
+    getState: () => getStableStateSnapshot(),
+    onStateChange: (listener) => subscribeToStateChanges(listener),
+  });
+
+  const debugRuntimeApi = Object.freeze({
+    isStableContract: false,
     config: appConfig,
     commands: Object.freeze({
       play: () => executeCommand(API_COMMANDS.PLAY),
@@ -597,28 +625,17 @@ export async function bootstrap(options = {}) {
     loadBundledDemoTrack: () => executeCommand(API_COMMANDS.LOAD_BUNDLED_DEMO_TRACK),
     loadLocalFile: (file) => executeCommand(API_COMMANDS.LOAD_LOCAL_FILE, { file }),
     getState: () => getStableStateSnapshot(),
-    onStateChange: (listener) => {
-      if (typeof listener !== "function") {
-        throw new Error("onStateChange listener must be a function.");
-      }
-
-      stateChangeListeners.add(listener);
-      listener(getStableStateSnapshot());
-
-      return () => {
-        stateChangeListeners.delete(listener);
-      };
-    },
+    onStateChange: (listener) => subscribeToStateChanges(listener),
     getAnalysis: () => ({ ...currentAnalysis }),
     audioEngine,
     ui,
     visualizer,
-  };
+  });
 
   if (exposeRuntimeOnWindow) {
     windowTarget.vizuPlayer = runtimeApi;
+    windowTarget.__VIZUPLAYER_DEBUG__ = debugRuntimeApi;
   }
-
   return runtimeApi;
 }
 
@@ -627,3 +644,4 @@ if (!globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__) {
     console.error("Failed to bootstrap VizuPlayer", error);
   });
 }
+

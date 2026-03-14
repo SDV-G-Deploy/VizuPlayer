@@ -100,10 +100,26 @@ All notable changes to this project will be documented in this file.
   - `trackLabel`
   - `errorMessage`
 - State listeners are emitted on runtime phase/state transitions and error transitions without rich event payloads.
-- Legacy/deep API surface (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internal refs) is retained as temporary compatibility surface and not promoted as canonical contract.
+- Legacy/deep API surface (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internal refs) is now exposed only via unstable debug namespace `window.__VIZUPLAYER_DEBUG__` and is not part of the stable contract.
 
 ### Validated (Thin Facade Pass)
 
 - `node --check src/core/app.js`
 - `node --check scripts/regression/command-phase-regression.mjs`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+
+### Changed (Thin Facade Tiny Corrective Pass)
+
+- Public root facade on `window.vizuPlayer` is now restricted to exactly seven canonical methods: `play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`.
+- Removed deep/legacy fields from public root (`commands`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, `audioEngine`, `ui`, `visualizer`, `config`).
+- Public command methods now use completion/error semantics only and do not expose internal queue/status taxonomy in the external contract.
+
+### Added (Thin Facade Tiny Corrective Pass)
+
+- Added explicit regression checks for exact facade key shape and forbidden-key absence on the public root API.
+
+### Validated (Thin Facade Tiny Corrective Pass)
+
+- `node --check src/core/app.js`
+- `node --check scripts/regression/command-phase-regression.mjs`
+- `node scripts/regression/command-phase-regression.mjs`

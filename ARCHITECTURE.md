@@ -46,7 +46,8 @@ High-level architecture notes for the VizuPlayer engine.
   - aborts active in-flight load wait on stop invalidation and superseding latest-load requests
   - provides canonical thin public facade for game consumers (`play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`)
   - emits stable snapshot-based state updates via `onStateChange(listener) -> unsubscribe`
-  - keeps legacy/deep runtime fields as temporary compatibility surface (not canonical API contract)
+  - exposes legacy/deep runtime helpers only via unstable debug namespace (`window.__VIZUPLAYER_DEBUG__`) and not via the stable facade
+  - keeps command return semantics internal; external hosts rely on `getState()` + `onStateChange()`
   - drives phase-derived status and control behavior
   - runs one render loop for metrics + visualizer
   - exports an injectable `bootstrap(options)` seam used by deterministic headless regression checks while preserving default browser auto-bootstrap behavior

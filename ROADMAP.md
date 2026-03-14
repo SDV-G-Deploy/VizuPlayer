@@ -42,12 +42,16 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - added canonical facade subset on `window.vizuPlayer`: `play()`, `pause()`, `stop()`, `loadTrack(url)`, `unload()`, `getState()`, `onStateChange()`
   - added orchestration-backed `unload()` reset path to force runtime back to `idle`
   - added stable public state snapshot contract and listener subscribe/unsubscribe semantics
-  - retained legacy/deep refs (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internal refs) as temporary compatibility surface
   - expanded regression harness coverage for thin-facade behavior; local result: 13/13 PASS
+- Thin facade tiny corrective pass (contract leak closure):
+  - narrowed `window.vizuPlayer` to the canonical 7-method facade only
+  - moved legacy/deep refs (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internals) to unstable debug namespace `window.__VIZUPLAYER_DEBUG__`
+  - normalized public command methods to completion/error promises without exposing internal status taxonomy
+  - strengthened regression harness with exact facade key checks and forbidden-key guards
 
 ## Active Next
 
-- Run an independent audit-pass focused on thin-facade contract conformance (`loadTrack`, `unload`, `getState`, `onStateChange`).
+- Run a repeat independent audit-pass focused on thin-facade contract conformance acceptance (`loadTrack`, `unload`, `getState`, `onStateChange`).
 - Keep the regression harness green as the lifecycle/load baseline safety net.
 
 ## Milestones

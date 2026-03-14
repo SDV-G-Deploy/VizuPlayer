@@ -38,6 +38,7 @@ Implemented and working in scope:
 - Local file loading via browser file picker (`audio/*`) as primary flow
 - Demo/URL track loading for hosted validation (including bundled asset path)
 - Playback controls: `Play`, `Pause`, `Stop`
+- Stable integration facade on `window.vizuPlayer`: `play()`, `pause()`, `stop()`, `loadTrack(url)`, `unload()`, `getState()`, `onStateChange(listener)`
 - Web Audio analysis pipeline
 - Live on-page numeric metrics:
   - `bass`
@@ -50,7 +51,23 @@ Out of scope for this stage:
 
 - Advanced visualizer redesign
 - Shader/particle expansion
-- Game integration API
+- Integration API expansion beyond the thin facade
+
+## Stable Integration Facade
+
+Public host integration should use only the stable facade on `window.vizuPlayer`:
+
+- `play()`
+- `pause()`
+- `stop()`
+- `loadTrack(url)`
+- `unload()`
+- `getState()`
+- `onStateChange(listener) -> unsubscribe`
+
+Command methods (`play`, `pause`, `stop`, `loadTrack`, `unload`) are completion/error promises only; host state flow should rely on `getState()` snapshots and `onStateChange` transitions.
+
+Unstable deep internals are available only through `window.__VIZUPLAYER_DEBUG__` for local debugging and are not part of the stable public contract.
 
 ## Runtime Modes
 
