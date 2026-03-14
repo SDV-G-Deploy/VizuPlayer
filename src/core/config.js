@@ -1,6 +1,6 @@
 export const APP_CONFIG = Object.freeze({
   appName: "VizuPlayer",
-  version: "0.3.0",
+  version: "0.4.0",
   playback: {
     bundledDemoTrackUrl: "./assets/music/little-more-intense-cosmo-puzzle-1.mp3",
   },
@@ -18,6 +18,7 @@ export const APP_CONFIG = Object.freeze({
     analysisTrebleId: "analysis-treble",
     analysisAmplitudeId: "analysis-amplitude",
     analysisOutputId: "analysis-output",
+    visualizerCanvasId: "visualizer-canvas",
   },
   analyser: {
     fftSize: 2048,
@@ -28,5 +29,8 @@ export const APP_CONFIG = Object.freeze({
       mid: [250, 2000],
       treble: [2000, 8000],
     },
+  },
+  visualizer: {
+    barCount: 64,
   },
 });

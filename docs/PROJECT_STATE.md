@@ -2,64 +2,53 @@
 
 ## Current Focus
 
-Corrective alignment and hardening of the audio-analysis MVP runtime before the next feature stage.
+First modular canvas visualizer foundation pass on top of the working audio-analysis MVP.
 
 ## Current Stage
 
-- Stage: Audio analysis MVP hardening pass
+- Stage: 3 - Visualization foundation MVP
 - Date: 2026-03-14
 
 ## Implemented In This Pass
 
-- Kept browser-native audio stack: `HTMLAudioElement` + `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode`
-- Made local file selection the primary load path via `<input type="file" accept="audio/*">`
-- Added explicit `Demo / URL Track` loading path for hosted demo validation
-- Added full playback controls: `Play`, `Pause`, `Stop`
-- Exposed always-visible live numeric metrics on-page:
+- Kept current working local file picker flow as the primary load path.
+- Kept optional demo/url loading path (`Load Demo/URL`, `Load Bundled Demo`).
+- Kept baseline transport controls available in UI (`Play`, `Pause`, `Stop`).
+- Kept always-visible analysis metrics on-page:
   - `bass`
   - `mid`
   - `treble`
   - `amplitude`
-- Kept structured analysis output visible in UI (`JSON`) and throttled in console logs
-- Hardened runtime flow for:
-  - play before load
-  - pause/resume
-  - stop/reset
-  - loading a second track after first
-  - avoiding duplicate `requestAnimationFrame` loops
-  - avoiding duplicate `MediaElementAudioSourceNode` creation
-  - revoking stale object URLs when replacing local files
-- Separated responsibilities across modules:
-  - `audioEngine.js` for context/graph/source lifecycle
-  - `musicPlayer.js` for playback/load state coordination
-  - `playerUI.js` for DOM binding + control and analysis rendering
-  - `app.js` for orchestration and loop wiring
+- Added a dedicated canvas visualizer area (`Cosmic Signal Panel`) in active UI.
+- Replaced disconnected/legacy visualizer behavior with a modular visual renderer:
+  - `src/visual/visualizer.js`
+- Added analyser sampling helper for one-frame analysis + spectrum reads:
+  - `AudioAnalyser.sampleFrame()`
+- Rewired orchestration so one active render loop drives:
+  - analysis updates
+  - visualizer frame rendering
+  - throttled analysis logging
+- Kept audio responsibilities separate from visual responsibilities:
+  - audio lifecycle in `src/audio/*`
+  - canvas drawing in `src/visual/visualizer.js`
+  - wiring in `src/core/app.js`
+  - DOM binding in `src/ui/playerUI.js`
 
 ## Working Now
 
-- Local file flow is explicit and primary in UI
-- Demo/bundled track flow remains available and clear for GitHub Pages mode
-- Play/Pause/Stop state transitions are handled through one player state model
-- Analysis values are readable and updating during playback
-- Event logs remain readable while analysis logs are throttled
-
-## Runtime Mode Notes
-
-1. GitHub Pages / hosted demo:
-   - Bundled asset path loading works with repository-relative URLs
-2. Local browser usage:
-   - User file loading works via browser file picker and object URLs
-
-These modes differ in source origin and browser security behavior; they are intentionally both supported.
+- Idle canvas renders calm dark sci-fi panel visuals even before playback.
+- During playback, bars and glow react to live spectrum + analysis values.
+- Stop resets playback position and analysis values cleanly.
+- Replacing one local file with another remains supported through the same flow.
 
 ## Known Limitations
 
-- No advanced visualizer redesign in this pass (intentionally out of scope)
-- No automated browser integration tests in CLI
-- Some external URLs may require CORS-compatible hosting to decode/analyse audio in browser
-- `file://` module loading may fail in some browsers; local HTTP server is recommended
+- No node network, particle links, shaders, or Three.js yet (intentionally out of scope).
+- No automated browser integration tests in CLI.
+- Full runtime verification still requires manual browser smoke test.
 
 ## Next Targets
 
-- Add focused browser smoke-test evidence for key runtime states
-- Move forward to the next visual layer pass without changing core audio loading contract
+- Tune visual motion palettes and transitions with browser-side playtesting.
+- Define a clean visual state/API contract for future game embedding.
+- Begin staged expansion toward node network + energy link layers.

@@ -6,24 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Explicit `Demo / URL Track` loading controls alongside local file picker flow
-- `Stop` playback control for baseline transport completeness
-- On-page numeric analysis surface for `bass`, `mid`, `treble`, `amplitude`
+- Dedicated `Cosmic Signal Panel` canvas area in active UI (`index.html`)
+- Modular canvas renderer in `src/visual/visualizer.js` with idle + music-reactive drawing
+- Visualizer wiring in config/UI layers:
+  - `ui.visualizerCanvasId`
+  - `visualizer.barCount`
+- `AudioAnalyser.sampleFrame()` helper for per-frame analysis + spectrum sampling
 
 ### Updated
 
-- Aligned runtime architecture with intended module boundaries:
-  - `audioEngine.js` for graph/source lifecycle
-  - `musicPlayer.js` for playback/load state coordination
-  - `playerUI.js` for DOM bindings and display
-  - `app.js` for orchestration and frame-loop lifecycle
-- Hardened playback/load flow for:
-  - play before load
-  - pause/resume
-  - stop/reset
-  - loading a second track
-- Improved resource safety:
-  - stale object URL revocation on local track replacement
-  - single media source graph creation
-  - single active `requestAnimationFrame` analysis loop
-- Kept console logs structured but throttled to avoid noise
+- `src/core/app.js` now drives one stable render loop for both:
+  - on-page analysis metric updates
+  - visualizer frame rendering
+- Preserved and validated local-file primary flow while keeping demo/url loading optional
+- Kept `Play`, `Pause`, and `Stop` transport behavior aligned with current player state model
+- Kept analysis metrics (`bass/mid/treble/amplitude`) visible and active during playback

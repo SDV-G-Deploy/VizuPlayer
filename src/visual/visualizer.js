@@ -1,46 +1,311 @@
-﻿export class Visualizer {
-  constructor({ canvas, analyser }) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d");
-    this.analyser = analyser;
-    this.rafId = null;
+const ZERO_ANALYSIS = Object.freeze({
+  bass: 0,
+  mid: 0,
+  treble: 0,
+  amplitude: 0,
+});
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function lerp(from, to, alpha) {
+  return from + (to - from) * alpha;
+}
+
+function toNumber(value) {
+  return Number.isFinite(value) ? value : 0;
+}
+
+function normalizeAnalysis(analysis) {
+  return {
+    bass: clamp(toNumber(analysis.bass) / 255, 0, 1),
+    mid: clamp(toNumber(analysis.mid) / 255, 0, 1),
+    treble: clamp(toNumber(analysis.treble) / 255, 0, 1),
+    amplitude: clamp(toNumber(analysis.amplitude) / 100, 0, 1),
+  };
+}
+
+function createStarField(count) {
+  const stars = [];
+
+  for (let index = 0; index < count; index += 1) {
+    stars.push({
+      x: Math.random(),
+      y: Math.random(),
+      radius: 0.4 + Math.random() * 1.4,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.35 + Math.random() * 1.25,
+      alpha: 0.15 + Math.random() * 0.45,
+    });
   }
 
-  start() {
-    if (this.rafId) {
+  return stars;
+}
+
+export class Visualizer {
+  constructor({ canvas, barCount = 64 }) {
+    if (!(canvas instanceof HTMLCanvasElement)) {
+      throw new Error("Visualizer requires a valid <canvas> element.");
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Unable to get 2D canvas context.");
+    }
+
+    this.canvas = canvas;
+    this.ctx = context;
+    this.barCount = Math.max(24, Math.floor(barCount));
+    this.mappedSpectrum = new Float32Array(this.barCount);
+    this.smoothBars = new Float32Array(this.barCount);
+    this.starField = createStarField(40);
+    this.analysis = { ...ZERO_ANALYSIS };
+    this.normalized = normalizeAnalysis(ZERO_ANALYSIS);
+    this.isPlaying = false;
+    this.pixelRatio = clamp(window.devicePixelRatio || 1, 1, 2);
+    this.width = 0;
+    this.height = 0;
+    this.handleResize = () => this.resize();
+
+    window.addEventListener("resize", this.handleResize, { passive: true });
+    this.resize(true);
+  }
+
+  destroy() {
+    window.removeEventListener("resize", this.handleResize);
+  }
+
+  resize(force = false) {
+    const width = Math.max(1, Math.floor(this.canvas.clientWidth || this.canvas.width || 320));
+    const height = Math.max(120, Math.floor(this.canvas.clientHeight || this.canvas.height || 180));
+    const scaledWidth = Math.floor(width * this.pixelRatio);
+    const scaledHeight = Math.floor(height * this.pixelRatio);
+
+    if (!force && scaledWidth === this.canvas.width && scaledHeight === this.canvas.height) {
       return;
     }
 
-    const frame = () => {
-      this.draw();
-      this.rafId = requestAnimationFrame(frame);
+    this.canvas.width = scaledWidth;
+    this.canvas.height = scaledHeight;
+    this.width = width;
+    this.height = height;
+    this.ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
+  }
+
+  setFrameData({ analysis = ZERO_ANALYSIS, spectrumData = null, isPlaying = false } = {}) {
+    this.analysis = {
+      bass: Math.round(clamp(toNumber(analysis.bass), 0, 255)),
+      mid: Math.round(clamp(toNumber(analysis.mid), 0, 255)),
+      treble: Math.round(clamp(toNumber(analysis.treble), 0, 255)),
+      amplitude: Math.round(clamp(toNumber(analysis.amplitude), 0, 100)),
     };
 
-    frame();
+    this.normalized = normalizeAnalysis(this.analysis);
+    this.isPlaying = Boolean(isPlaying);
+    this.mapSpectrumData(spectrumData);
   }
 
-  stop() {
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
+  mapSpectrumData(spectrumData) {
+    if (!spectrumData || typeof spectrumData.length !== "number" || spectrumData.length === 0) {
+      this.mappedSpectrum.fill(0);
+      return;
+    }
+
+    const sourceLength = spectrumData.length;
+
+    for (let index = 0; index < this.barCount; index += 1) {
+      const start = Math.floor((index / this.barCount) * sourceLength);
+      const end = Math.max(start + 1, Math.floor(((index + 1) / this.barCount) * sourceLength));
+      let sum = 0;
+      let count = 0;
+
+      for (let cursor = start; cursor < end; cursor += 1) {
+        sum += spectrumData[cursor];
+        count += 1;
+      }
+
+      this.mappedSpectrum[index] = count > 0 ? (sum / count) / 255 : 0;
     }
   }
 
-  draw() {
-    const { ctx, canvas } = this;
-    const data = this.analyser.sampleFrequencyData();
-    const barCount = data.length;
-    const barWidth = canvas.width / barCount;
+  render(timestamp = 0) {
+    this.resize();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#7ce6ff";
+    const { ctx, width, height } = this;
+    const bass = this.normalized.bass;
+    const mid = this.normalized.mid;
+    const treble = this.normalized.treble;
+    const amplitude = this.normalized.amplitude;
+    const panelGlow = 0.25 + amplitude * 0.65;
 
-    for (let i = 0; i < barCount; i += 1) {
-      const value = data[i] / 255;
-      const barHeight = value * canvas.height;
-      const x = i * barWidth;
-      const y = canvas.height - barHeight;
-      ctx.fillRect(x, y, Math.max(1, barWidth - 1), barHeight);
+    const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height);
+    backgroundGradient.addColorStop(0, `rgba(6, 16, 36, ${0.95 + amplitude * 0.04})`);
+    backgroundGradient.addColorStop(0.55, "rgba(4, 10, 24, 0.98)");
+    backgroundGradient.addColorStop(1, "rgba(2, 6, 14, 1)");
+
+    ctx.fillStyle = backgroundGradient;
+    ctx.fillRect(0, 0, width, height);
+
+    this.drawNebula(timestamp, panelGlow);
+    this.drawStarField(timestamp, treble, amplitude);
+    this.drawGrid(amplitude);
+    this.drawSpectrumBars(timestamp, { bass, mid, treble, amplitude });
+    this.drawCenterPulse(timestamp, { bass, mid, treble, amplitude });
+    this.drawPanelFrame(panelGlow);
+  }
+
+  drawNebula(timestamp, panelGlow) {
+    const { ctx, width, height } = this;
+    const driftX = Math.sin(timestamp * 0.0002) * width * 0.04;
+    const driftY = Math.cos(timestamp * 0.00025) * height * 0.03;
+    const centerX = width * 0.5 + driftX;
+    const centerY = height * 0.5 + driftY;
+    const radius = Math.max(width, height) * (0.64 + panelGlow * 0.1);
+
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+    gradient.addColorStop(0, `rgba(26, 88, 160, ${0.22 + panelGlow * 0.2})`);
+    gradient.addColorStop(0.55, "rgba(14, 45, 95, 0.12)");
+    gradient.addColorStop(1, "rgba(6, 12, 26, 0)");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  drawStarField(timestamp, treble, amplitude) {
+    const { ctx, width, height, starField } = this;
+    const sparkleGain = this.isPlaying ? 0.35 + treble * 0.65 : 0.22;
+
+    for (const star of starField) {
+      const pulse = 0.55 + 0.45 * Math.sin(timestamp * 0.0012 * star.speed + star.phase);
+      const alpha = clamp(star.alpha * pulse * sparkleGain + amplitude * 0.04, 0.05, 0.85);
+      ctx.fillStyle = `rgba(166, 223, 255, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(star.x * width, star.y * height, star.radius, 0, Math.PI * 2);
+      ctx.fill();
     }
+  }
+
+  drawGrid(amplitude) {
+    const { ctx, width, height } = this;
+    const rows = 7;
+    const columns = 10;
+
+    ctx.strokeStyle = `rgba(110, 180, 255, ${0.05 + amplitude * 0.09})`;
+    ctx.lineWidth = 1;
+
+    for (let row = 1; row < rows; row += 1) {
+      const y = (height / rows) * row;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+
+    for (let column = 1; column < columns; column += 1) {
+      const x = (width / columns) * column;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+  }
+
+  drawSpectrumBars(timestamp, { bass, mid, treble, amplitude }) {
+    const { ctx, width, height } = this;
+    const horizontalPadding = 18;
+    const baseY = height - 24;
+    const topLimit = 28;
+    const drawHeight = Math.max(40, baseY - topLimit);
+    const gap = 2;
+    const usableWidth = width - horizontalPadding * 2;
+    const barWidth = Math.max(2, (usableWidth - gap * (this.barCount - 1)) / this.barCount);
+
+    for (let index = 0; index < this.barCount; index += 1) {
+      const zone = index / (this.barCount - 1);
+      let zoneGain = 1;
+
+      if (zone < 0.33) {
+        zoneGain += bass * 1.05;
+      } else if (zone < 0.67) {
+        zoneGain += mid * 0.9;
+      } else {
+        zoneGain += treble * 0.95;
+      }
+
+      const shimmer = this.isPlaying
+        ? 0.5 + 0.5 * Math.sin(timestamp * 0.018 + index * 0.85 + treble * 2.7)
+        : 0.25 + 0.15 * Math.sin(timestamp * 0.003 + index * 0.25);
+      const idleWave = this.isPlaying
+        ? 0.02
+        : 0.05 + 0.05 * (Math.sin(timestamp * 0.0018 + index * 0.22) * 0.5 + 0.5);
+      const trebleFlicker = zone > 0.67 ? treble * shimmer * 0.35 : 0;
+      const target = clamp(this.mappedSpectrum[index] * zoneGain + idleWave + trebleFlicker, 0, 1.15);
+      const smoothing = this.isPlaying ? 0.25 + treble * 0.18 : 0.09;
+      this.smoothBars[index] = lerp(this.smoothBars[index], target, smoothing);
+
+      const barHeight = Math.max(2, this.smoothBars[index] * drawHeight * (0.58 + amplitude * 0.72));
+      const x = horizontalPadding + index * (barWidth + gap);
+      const y = baseY - barHeight;
+
+      const gradient = ctx.createLinearGradient(0, y, 0, baseY);
+      gradient.addColorStop(0, `rgba(152, 238, 255, ${0.66 + amplitude * 0.3})`);
+      gradient.addColorStop(0.5, `rgba(72, 174, 255, ${0.48 + amplitude * 0.25})`);
+      gradient.addColorStop(1, "rgba(20, 70, 140, 0.32)");
+
+      ctx.shadowColor = `rgba(99, 218, 255, ${0.15 + amplitude * 0.5})`;
+      ctx.shadowBlur = 8 + amplitude * 12;
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, y, barWidth, barHeight);
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.strokeStyle = `rgba(142, 205, 255, ${0.35 + amplitude * 0.25})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(horizontalPadding - 4, baseY + 0.5);
+    ctx.lineTo(width - horizontalPadding + 4, baseY + 0.5);
+    ctx.stroke();
+  }
+
+  drawCenterPulse(timestamp, { bass, mid, treble, amplitude }) {
+    const { ctx, width, height } = this;
+    const pulse = this.isPlaying ? Math.sin(timestamp * 0.0055 + bass * 7) : Math.sin(timestamp * 0.0017);
+    const centerX = width * 0.5;
+    const centerY = height * 0.42;
+    const radius = height * (0.1 + mid * 0.1 + amplitude * 0.12 + pulse * 0.02);
+
+    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.8);
+    halo.addColorStop(0, `rgba(82, 235, 255, ${0.18 + amplitude * 0.35})`);
+    halo.addColorStop(0.6, `rgba(42, 140, 215, ${0.08 + amplitude * 0.22})`);
+    halo.addColorStop(1, "rgba(16, 38, 84, 0)");
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, width, height);
+
+    const accentCount = 7;
+    ctx.strokeStyle = `rgba(166, 231, 255, ${0.06 + treble * 0.24})`;
+    ctx.lineWidth = 1;
+
+    for (let index = 0; index < accentCount; index += 1) {
+      const x = width * ((index + 1) / (accentCount + 1));
+      const sway = Math.sin(timestamp * 0.0036 + index * 0.9) * 6;
+      const lineHeight = height * (0.08 + treble * 0.16);
+      ctx.beginPath();
+      ctx.moveTo(x + sway, centerY - lineHeight * 0.5);
+      ctx.lineTo(x + sway, centerY + lineHeight * 0.5);
+      ctx.stroke();
+    }
+  }
+
+  drawPanelFrame(panelGlow) {
+    const { ctx, width, height } = this;
+    ctx.strokeStyle = `rgba(116, 206, 255, ${0.38 + panelGlow * 0.25})`;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(0.6, 0.6, width - 1.2, height - 1.2);
+
+    ctx.strokeStyle = `rgba(132, 220, 255, ${0.16 + panelGlow * 0.16})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(8.5, 8.5, width - 17, height - 17);
   }
 }
+

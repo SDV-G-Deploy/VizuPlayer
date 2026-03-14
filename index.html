@@ -23,12 +23,13 @@
     }
 
     .panel {
-      width: min(100%, 820px);
+      width: min(100%, 900px);
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 12px;
       padding: 20px;
       box-sizing: border-box;
+      box-shadow: 0 12px 36px rgba(3, 9, 27, 0.35);
     }
 
     h1 {
@@ -97,6 +98,42 @@
       font-weight: 700;
     }
 
+    .visualizer-shell {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(114, 198, 255, 0.36);
+      background: linear-gradient(180deg, rgba(5, 12, 28, 0.98), rgba(4, 8, 18, 0.98));
+      box-shadow: inset 0 0 0 1px rgba(160, 224, 255, 0.14), 0 12px 26px rgba(3, 14, 30, 0.4);
+    }
+
+    #visualizer-canvas {
+      display: block;
+      width: 100%;
+      height: 260px;
+    }
+
+    .visualizer-label {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(170, 229, 255, 0.9);
+      border: 1px solid rgba(139, 214, 255, 0.4);
+      border-radius: 999px;
+      background: rgba(6, 26, 46, 0.55);
+      pointer-events: none;
+    }
+
+    .visualizer-hint {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      opacity: 0.78;
+    }
+
     .analysis-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -139,6 +176,10 @@
       .analysis-grid {
         grid-template-columns: 1fr;
       }
+
+      #visualizer-canvas {
+        height: 210px;
+      }
     }
   </style>
 </head>
@@ -180,6 +221,15 @@
     </section>
 
     <p id="player-status">Status: waiting for track</p>
+
+    <section class="section" aria-label="Cosmic signal panel">
+      <h2>Cosmic Signal Panel</h2>
+      <div class="visualizer-shell">
+        <canvas id="visualizer-canvas" width="780" height="260" aria-label="Audio visualizer canvas"></canvas>
+        <span class="visualizer-label">Signal Panel</span>
+      </div>
+      <p class="visualizer-hint">Idle mode stays calm until playback starts.</p>
+    </section>
 
     <section class="section" aria-label="Live analysis">
       <h2>Live Analysis</h2>

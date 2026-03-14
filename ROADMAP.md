@@ -1,4 +1,4 @@
-﻿# ROADMAP
+# ROADMAP
 
 ## Vision
 
@@ -6,7 +6,7 @@ Build a reusable web music engine that can run standalone and serve as the audio
 
 ## Current Position
 
-- Stage: 2 - Audio analysis MVP
+- Stage: 3 - Visualization foundation MVP
 - Date: 2026-03-14
 
 ## Completed
@@ -16,12 +16,13 @@ Build a reusable web music engine that can run standalone and serve as the audio
 - Initial source tree and module placeholders
 - Browser bootstrap page and startup pipeline
 - MVP audio analysis pipeline (local file -> playback -> analyser -> band metrics)
+- First integrated canvas visualizer foundation (cosmic signal panel)
 
 ## Active Next
 
-- Build first minimal canvas-based visualization from current analysis output
-- Preserve separation: audio/analyser logic vs visual logic
-- Define first integration-facing API shape for game-side consumption
+- Tune visual style and motion using browser feedback while keeping module boundaries stable
+- Define visual state contract for future game embedding
+- Plan next additive visual layer (node network + energy links) without replacing current render path
 
 ## Milestones
 

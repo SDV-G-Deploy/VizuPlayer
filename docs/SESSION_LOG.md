@@ -26,3 +26,16 @@
   - hardened object URL lifecycle (`URL.createObjectURL` + revoke on replacement)
   - guarded against duplicate RAF loops and duplicate media source graph creation
 - Updated project docs to match actual behavior and runtime-mode differences.
+- Visualizer foundation pass completed (cosmic signal panel canvas).
+- Added dedicated visualizer canvas block to active UI in `index.html`.
+- Rebuilt `src/visual/visualizer.js` as the active visual render module (idle + reactive behavior).
+- Extended UI/config wiring for canvas id binding:
+  - `src/core/config.js` (`ui.visualizerCanvasId`, `visualizer.barCount`)
+  - `src/ui/playerUI.js` (`getVisualizerCanvas()`)
+- Extended analyser contract with one-frame sampling API:
+  - `src/audio/analyser.js` (`sampleFrame()`)
+- Reworked app orchestration in `src/core/app.js`:
+  - integrated visualizer into active flow
+  - replaced split analysis loop with one stable render loop for metrics + canvas
+  - preserved existing local/demo load paths and transport controls
+- Updated roadmap/state docs to reflect Stage 3 visualization foundation status.

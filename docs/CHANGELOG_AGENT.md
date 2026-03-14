@@ -30,3 +30,15 @@
 
 - This pass intentionally avoided major visual redesign and external dependencies.
 - Visualizer expansion remains out of scope until the next stage.
+
+### Updated (Visualizer Foundation Pass)
+
+- Added dedicated canvas visualizer section (`Cosmic Signal Panel`) to active page layout.
+- Replaced disconnected visualizer stub with active modular renderer in `src/visual/visualizer.js`.
+- Added analyser frame sampling API (`sampleFrame`) to provide both band analysis and spectrum data for visuals.
+- Rewired orchestration in `src/core/app.js` to one render loop handling:
+  - UI analysis updates
+  - canvas rendering
+  - throttled analysis logging
+- Kept local file picker as primary flow and preserved demo/url loading as optional path.
+- Kept playback transport complete with `Play`, `Pause`, and `Stop`.

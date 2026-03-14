@@ -7,6 +7,15 @@ function mustGetElement(id) {
   return element;
 }
 
+function mustGetCanvas(id) {
+  const element = mustGetElement(id);
+  if (!(element instanceof HTMLCanvasElement)) {
+    throw new Error(`Element #${id} must be a <canvas>.`);
+  }
+
+  return element;
+}
+
 export class PlayerUI {
   constructor(ids) {
     this.ids = ids;
@@ -23,6 +32,7 @@ export class PlayerUI {
     this.analysisTrebleNode = null;
     this.analysisAmplitudeNode = null;
     this.analysisOutputNode = null;
+    this.visualizerCanvas = null;
   }
 
   initialize(defaultTrackUrl = "") {
@@ -39,6 +49,7 @@ export class PlayerUI {
     this.analysisTrebleNode = mustGetElement(this.ids.analysisTrebleId);
     this.analysisAmplitudeNode = mustGetElement(this.ids.analysisAmplitudeId);
     this.analysisOutputNode = mustGetElement(this.ids.analysisOutputId);
+    this.visualizerCanvas = mustGetCanvas(this.ids.visualizerCanvasId);
 
     this.setTrackUrl(defaultTrackUrl);
     this.renderAnalysis({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
@@ -95,6 +106,10 @@ export class PlayerUI {
 
   getTrackUrl() {
     return this.trackUrlInput.value.trim();
+  }
+
+  getVisualizerCanvas() {
+    return this.visualizerCanvas;
   }
 
   setTrackUrl(url) {

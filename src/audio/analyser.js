@@ -1,4 +1,4 @@
-﻿const DEFAULT_BANDS = Object.freeze({
+const DEFAULT_BANDS = Object.freeze({
   bass: [20, 250],
   mid: [250, 2000],
   treble: [2000, 8000],
@@ -21,8 +21,8 @@ function averageRange(data, startIndex, endIndex) {
   let sum = 0;
   let count = 0;
 
-  for (let i = startIndex; i <= endIndex; i += 1) {
-    sum += data[i];
+  for (let index = startIndex; index <= endIndex; index += 1) {
+    sum += data[index];
     count += 1;
   }
 
@@ -51,9 +51,25 @@ export class AudioAnalyser {
   }
 
   getAnalysis() {
+    this.captureFrameData();
+    return this.computeAnalysis();
+  }
+
+  sampleFrame() {
+    this.captureFrameData();
+
+    return {
+      analysis: this.computeAnalysis(),
+      frequencyData: this.frequencyData,
+    };
+  }
+
+  captureFrameData() {
     this.analyserNode.getByteFrequencyData(this.frequencyData);
     this.analyserNode.getByteTimeDomainData(this.waveData);
+  }
 
+  computeAnalysis() {
     const nyquist = this.audioContext.sampleRate / 2;
     const binCount = this.frequencyData.length;
 
@@ -79,8 +95,8 @@ export class AudioAnalyser {
   getAmplitude() {
     let sumSquares = 0;
 
-    for (let i = 0; i < this.waveData.length; i += 1) {
-      const normalized = (this.waveData[i] - 128) / 128;
+    for (let index = 0; index < this.waveData.length; index += 1) {
+      const normalized = (this.waveData[index] - 128) / 128;
       sumSquares += normalized * normalized;
     }
 

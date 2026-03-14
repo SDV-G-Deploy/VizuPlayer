@@ -1,6 +1,7 @@
 import { AudioEngine } from "../audio/audioEngine.js";
 import { AudioAnalyser } from "../audio/analyser.js";
 import { MusicPlayer } from "../audio/musicPlayer.js";
+import { Visualizer } from "../visual/visualizer.js";
 import { APP_CONFIG } from "./config.js";
 import { PlayerUI } from "../ui/playerUI.js";
 
@@ -24,6 +25,19 @@ function createConsoleLogger(prefix) {
   };
 }
 
+function sanitizeAnalysis(values) {
+  return {
+    bass: Number.isFinite(values?.bass) ? Math.round(values.bass) : 0,
+    mid: Number.isFinite(values?.mid) ? Math.round(values.mid) : 0,
+    treble: Number.isFinite(values?.treble) ? Math.round(values.treble) : 0,
+    amplitude: Number.isFinite(values?.amplitude) ? Math.round(values.amplitude) : 0,
+  };
+}
+
+function analysisKey(values) {
+  return `${values.bass}|${values.mid}|${values.treble}|${values.amplitude}`;
+}
+
 async function bootstrap() {
   const logger = createConsoleLogger("[VizuPlayer]");
   const audioEngine = new AudioEngine();
@@ -31,10 +45,34 @@ async function bootstrap() {
   const ui = new PlayerUI(APP_CONFIG.ui);
   ui.initialize(APP_CONFIG.playback.bundledDemoTrackUrl);
 
+  const visualizer = new Visualizer({
+    canvas: ui.getVisualizerCanvas(),
+    barCount: APP_CONFIG.visualizer.barCount,
+  });
+
   let analyser = null;
   let animationFrameId = null;
   let lastLogTime = 0;
   let endedListenerAttached = false;
+  let currentAnalysis = { ...ZERO_ANALYSIS };
+  let lastRenderedAnalysis = "";
+
+  const renderAnalysisIfChanged = (values) => {
+    const safeValues = sanitizeAnalysis(values);
+    const key = analysisKey(safeValues);
+
+    if (key === lastRenderedAnalysis) {
+      return;
+    }
+
+    lastRenderedAnalysis = key;
+    currentAnalysis = safeValues;
+    ui.renderAnalysis(safeValues);
+  };
+
+  const setAnalysis = (values) => {
+    renderAnalysisIfChanged(values);
+  };
 
   const syncControls = () => {
     const state = player.getState();
@@ -45,43 +83,6 @@ async function bootstrap() {
       canPause: state.hasTrackLoaded && state.isPlaying,
       canStop: state.hasTrackLoaded,
     });
-  };
-
-  const stopAnalysisLoop = () => {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-  };
-
-  const resetAnalysisDisplayIfNoTrack = () => {
-    if (!player.getState().hasTrackLoaded) {
-      ui.renderAnalysis(ZERO_ANALYSIS);
-    }
-  };
-
-  const analysisFrame = (timestamp) => {
-    const state = player.getState();
-    if (!state.isPlaying || !analyser) {
-      stopAnalysisLoop();
-      return;
-    }
-
-    const values = analyser.getAnalysis();
-    ui.renderAnalysis(values);
-
-    if (timestamp - lastLogTime >= APP_CONFIG.analyser.logIntervalMs) {
-      lastLogTime = timestamp;
-      console.log("[VizuPlayer analysis]", values);
-    }
-
-    animationFrameId = requestAnimationFrame(analysisFrame);
-  };
-
-  const startAnalysisLoop = () => {
-    if (animationFrameId === null) {
-      animationFrameId = requestAnimationFrame(analysisFrame);
-    }
   };
 
   const ensureAnalyser = async () => {
@@ -100,7 +101,6 @@ async function bootstrap() {
     if (!endedListenerAttached) {
       graph.audioElement.addEventListener("ended", () => {
         player.markEnded();
-        stopAnalysisLoop();
         ui.setStatus("ended");
         syncControls();
         logger.info("playback-ended", { source: audioEngine.getCurrentSource() });
@@ -112,18 +112,62 @@ async function bootstrap() {
     return analyser;
   };
 
+  const renderFrame = (timestamp) => {
+    const state = player.getState();
+    let frameAnalysis = currentAnalysis;
+    let spectrumData = null;
+
+    if (state.isPlaying && analyser) {
+      const frame = analyser.sampleFrame();
+      frameAnalysis = sanitizeAnalysis(frame.analysis);
+      spectrumData = frame.frequencyData;
+      setAnalysis(frameAnalysis);
+
+      if (timestamp - lastLogTime >= APP_CONFIG.analyser.logIntervalMs) {
+        lastLogTime = timestamp;
+        console.log("[VizuPlayer analysis]", frameAnalysis);
+      }
+    } else if (!state.hasTrackLoaded) {
+      frameAnalysis = ZERO_ANALYSIS;
+      setAnalysis(ZERO_ANALYSIS);
+    }
+
+    visualizer.setFrameData({
+      analysis: frameAnalysis,
+      spectrumData,
+      isPlaying: state.isPlaying,
+    });
+    visualizer.render(timestamp);
+
+    animationFrameId = requestAnimationFrame(renderFrame);
+  };
+
+  const startRenderLoop = () => {
+    if (animationFrameId === null) {
+      animationFrameId = requestAnimationFrame(renderFrame);
+    }
+  };
+
+  const stopRenderLoop = () => {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  };
+
   const handleTrackLoaded = (statusMessage, logPayload) => {
-    stopAnalysisLoop();
-    ui.renderAnalysis(ZERO_ANALYSIS);
+    setAnalysis(ZERO_ANALYSIS);
     ui.setStatus(statusMessage);
     syncControls();
     logger.info("track-loaded", logPayload);
   };
 
   const handleActionFailure = () => {
-    stopAnalysisLoop();
+    if (!player.getState().hasTrackLoaded) {
+      setAnalysis(ZERO_ANALYSIS);
+    }
+
     syncControls();
-    resetAnalysisDisplayIfNoTrack();
   };
 
   ui.bindEvents({
@@ -196,7 +240,6 @@ async function bootstrap() {
 
         ui.setStatus("playing");
         syncControls();
-        startAnalysisLoop();
         logger.info("playback-started", { source: audioEngine.getCurrentSource() });
       } catch (error) {
         handleActionFailure();
@@ -206,7 +249,6 @@ async function bootstrap() {
 
     onPause: async () => {
       player.pause();
-      stopAnalysisLoop();
       ui.setStatus("paused");
       syncControls();
       logger.info("playback-paused");
@@ -214,8 +256,7 @@ async function bootstrap() {
 
     onStop: async () => {
       player.stop();
-      stopAnalysisLoop();
-      ui.renderAnalysis(ZERO_ANALYSIS);
+      setAnalysis(ZERO_ANALYSIS);
       ui.setStatus("stopped");
       syncControls();
       logger.info("playback-stopped");
@@ -223,18 +264,26 @@ async function bootstrap() {
   });
 
   syncControls();
+  setAnalysis(ZERO_ANALYSIS);
+  startRenderLoop();
+
+  window.addEventListener("beforeunload", () => {
+    stopRenderLoop();
+    visualizer.destroy();
+  });
 
   window.vizuPlayer = {
     config: APP_CONFIG,
     audioEngine,
     player,
     ui,
+    visualizer,
     play: () => player.play(),
     pause: () => player.pause(),
     stop: () => player.stop(),
     loadDemoTrack: (url) => player.loadDemoTrack(url, APP_CONFIG.analyser),
     loadLocalFile: (file) => player.loadLocalFile(file, APP_CONFIG.analyser),
-    getAnalysis: () => (analyser ? analyser.getAnalysis() : null),
+    getAnalysis: () => ({ ...currentAnalysis }),
   };
 }
 
