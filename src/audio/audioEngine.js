@@ -55,7 +55,7 @@ export class AudioEngine {
     };
   }
 
-  async loadFile(file, graphOptions = {}) {
+  async loadFile(file, graphOptions = {}, loadOptions = {}) {
     if (!(file instanceof File)) {
       throw new Error("Please choose a valid audio file.");
     }
@@ -68,7 +68,7 @@ export class AudioEngine {
     this.currentObjectUrl = objectUrl;
 
     try {
-      await this.loadSource(objectUrl, "Unable to load selected audio file.");
+      await this.loadSource(objectUrl, "Unable to load selected audio file.", loadOptions);
     } catch (error) {
       this.unload();
       throw error;
@@ -103,9 +103,13 @@ export class AudioEngine {
     await this.waitForAudioCanPlay(errorMessage, loadOptions);
   }
 
-  waitForAudioCanPlay(errorMessage = "Unable to load audio source.", { timeoutMs = 0 } = {}) {
+  waitForAudioCanPlay(errorMessage = "Unable to load audio source.", { timeoutMs = 0, signal = null } = {}) {
     if (!this.audioElement) {
       return Promise.reject(new Error("Audio element is not initialized."));
+    }
+
+    if (signal?.aborted) {
+      return Promise.reject(new Error("Audio load aborted."));
     }
 
     if (this.audioElement.readyState >= 2) {
@@ -122,6 +126,10 @@ export class AudioEngine {
       const cleanup = () => {
         this.audioElement.removeEventListener("canplay", onCanPlay);
         this.audioElement.removeEventListener("error", onError);
+
+        if (signal && typeof signal.removeEventListener === "function") {
+          signal.removeEventListener("abort", onAbort);
+        }
 
         if (timeoutId !== null) {
           window.clearTimeout(timeoutId);
@@ -143,8 +151,22 @@ export class AudioEngine {
         reject(new Error(`${errorMessage} (timed out after ${normalizedTimeoutMs} ms).`));
       };
 
+      const onAbort = () => {
+        cleanup();
+        reject(new Error("Audio load aborted."));
+      };
+
       this.audioElement.addEventListener("canplay", onCanPlay);
       this.audioElement.addEventListener("error", onError);
+
+      if (signal && typeof signal.addEventListener === "function") {
+        signal.addEventListener("abort", onAbort, { once: true });
+
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+      }
 
       if (normalizedTimeoutMs > 0) {
         timeoutId = window.setTimeout(onTimeout, normalizedTimeoutMs);

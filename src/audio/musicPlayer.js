@@ -46,8 +46,8 @@ export class MusicPlayer {
     this.setPhase(PLAYER_PHASES.ERROR);
   }
 
-  async loadLocalFile(file, graphOptions = {}) {
-    await this.audioEngine.loadFile(file, graphOptions);
+  async loadLocalFile(file, graphOptions = {}, loadOptions = {}) {
+    await this.audioEngine.loadFile(file, graphOptions, loadOptions);
   }
 
   async loadDemoTrack(url, graphOptions = {}, loadOptions = {}) {
