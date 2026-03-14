@@ -26,68 +26,45 @@ function normalizeAnalysis(analysis) {
   };
 }
 
-function distanceSquared(a, b) {
-  const dx = toNumber(a?.x) - toNumber(b?.x);
-  const dy = toNumber(a?.y) - toNumber(b?.y);
-  return dx * dx + dy * dy;
-}
-
 function createDefaultLayout() {
   const layout = [
     {
       x: 0.5,
       y: 0.44,
-      weight: 1.55,
-      drift: 0.45,
-      phase: 0.08,
+      weight: 1.5,
+      drift: 0.3,
+      phase: 0.1,
       accent: true,
       anchor: true,
-      depth: 1.08,
+      depth: 1.1,
     },
   ];
 
-  const innerCount = 8;
+  const innerCount = 5;
   for (let index = 0; index < innerCount; index += 1) {
     const angle = (index / innerCount) * Math.PI * 2 - Math.PI * 0.5;
-    const wobble = Math.sin((index + 1) * 1.37) * 0.012;
     layout.push({
-      x: 0.5 + Math.cos(angle) * (0.155 + wobble * 0.5),
-      y: 0.44 + Math.sin(angle) * (0.118 + wobble),
-      weight: 1.02 + (index % 2 === 0 ? 0.08 : -0.04),
-      drift: 0.82 + (index % 3) * 0.12,
-      phase: 0.4 + index * 0.68,
+      x: 0.5 + Math.cos(angle) * 0.15,
+      y: 0.44 + Math.sin(angle) * 0.11,
+      weight: 1 + (index % 2 === 0 ? 0.06 : -0.04),
+      drift: 0.7 + (index % 3) * 0.12,
+      phase: 0.4 + index * 0.72,
       accent: index % 2 === 0,
-      depth: 0.98 + (index % 3) * 0.05,
+      depth: 0.96 + (index % 3) * 0.05,
     });
   }
 
-  const outerCount = 12;
+  const outerCount = 7;
   for (let index = 0; index < outerCount; index += 1) {
-    const angle = (index / outerCount) * Math.PI * 2 - Math.PI * 0.45;
-    const radiusX = 0.294 + Math.sin(index * 0.9) * 0.018;
-    const radiusY = 0.212 + Math.cos(index * 0.85) * 0.016;
+    const angle = (index / outerCount) * Math.PI * 2 - Math.PI * 0.42;
     layout.push({
-      x: 0.5 + Math.cos(angle) * radiusX,
-      y: 0.44 + Math.sin(angle) * radiusY,
-      weight: 0.84 + ((index + 1) % 4) * 0.07,
-      drift: 1 + (index % 4) * 0.14,
-      phase: 0.9 + index * 0.54,
-      accent: index % 4 === 0,
-      depth: 0.74 + (index % 5) * 0.06,
-    });
-  }
-
-  const veilCount = 6;
-  for (let index = 0; index < veilCount; index += 1) {
-    const factor = veilCount <= 1 ? 0 : index / (veilCount - 1);
-    layout.push({
-      x: 0.24 + factor * 0.52 + Math.sin(index * 1.4) * 0.014,
-      y: 0.66 + Math.sin(index * 0.8) * 0.025,
-      weight: 0.76 + (index % 3) * 0.08,
-      drift: 1.12 + (index % 2) * 0.18,
-      phase: 0.5 + index * 0.74,
-      accent: index === 0 || index === veilCount - 1,
-      depth: 0.66 + index * 0.04,
+      x: 0.5 + Math.cos(angle) * (0.27 + Math.sin(index * 1.1) * 0.015),
+      y: 0.44 + Math.sin(angle) * (0.2 + Math.cos(index * 0.9) * 0.012),
+      weight: 0.82 + (index % 3) * 0.08,
+      drift: 0.86 + (index % 2) * 0.16,
+      phase: 0.88 + index * 0.62,
+      accent: index % 3 === 0,
+      depth: 0.74 + (index % 4) * 0.06,
     });
   }
 
@@ -96,35 +73,8 @@ function createDefaultLayout() {
 
 const DEFAULT_LAYOUT = Object.freeze(createDefaultLayout());
 
-function createNodeRuntime(node, index, nodeRadius) {
-  const seed = (Math.sin((index + 1) * 2.17) + 1) * 0.5;
-  const depth = clamp(toNumber(node.depth) || (0.72 + seed * 0.52), 0.55, 1.28);
-
-  return {
-    nx: clamp(toNumber(node.x), 0.08, 0.92),
-    ny: clamp(toNumber(node.y), 0.12, 0.88),
-    weight: clamp(toNumber(node.weight) || 1, 0.55, 1.9),
-    drift: clamp(toNumber(node.drift) || 1, 0.3, 1.9),
-    phase: toNumber(node.phase) || index * 0.75,
-    accent: Boolean(node.accent),
-    anchor: Boolean(node.anchor),
-    depth,
-    motionX: 0.7 + seed * 0.9,
-    motionY: 0.7 + (1 - seed) * 0.9,
-    flowJitter: 0.00054 + seed * 0.00036,
-    orbitRadius: 2.2 + seed * 7.8,
-    orbitSpeed: 0.00022 + (1 - seed) * 0.00024,
-    pulseSpeed: 0.0024 + seed * 0.0018,
-    x: 0,
-    y: 0,
-    radius: nodeRadius * depth,
-    coreAlpha: 0.3,
-    spark: 0,
-  };
-}
-
 function normalizeLayout(layout) {
-  if (!Array.isArray(layout) || layout.length < 10) {
+  if (!Array.isArray(layout) || layout.length < 8) {
     return DEFAULT_LAYOUT;
   }
 
@@ -147,12 +97,15 @@ function parseConnection(entry) {
   return null;
 }
 
-function buildAdaptiveConnections(layout) {
+function createDefaultConnections(layout) {
   const nodeCount = layout.length;
+  const innerCount = Math.min(5, Math.max(0, nodeCount - 1));
+  const outerStart = 1 + innerCount;
+  const outerCount = Math.max(0, nodeCount - outerStart);
   const uniquePairs = new Set();
   const connections = [];
 
-  const addConnection = (from, to, weight) => {
+  const add = (from, to, weight) => {
     if (from < 0 || to < 0 || from >= nodeCount || to >= nodeCount || from === to) {
       return;
     }
@@ -163,65 +116,60 @@ function buildAdaptiveConnections(layout) {
     }
 
     uniquePairs.add(key);
-    connections.push({ from, to, weight: clamp(weight, 0.45, 1.35) });
+    connections.push({ from, to, weight: clamp(weight, 0.45, 1.25) });
   };
 
-  for (let index = 0; index < nodeCount; index += 1) {
-    const distances = [];
+  for (let inner = 0; inner < innerCount; inner += 1) {
+    const index = 1 + inner;
+    const nextIndex = 1 + ((inner + 1) % innerCount);
 
-    for (let candidate = 0; candidate < nodeCount; candidate += 1) {
-      if (candidate === index) {
-        continue;
-      }
+    add(0, index, 1.08);
+    add(index, nextIndex, 0.82);
 
-      distances.push({
-        to: candidate,
-        distance: Math.sqrt(distanceSquared(layout[index], layout[candidate])),
-      });
+    if (outerCount > 0) {
+      const outerIndex = outerStart + (inner % outerCount);
+      add(index, outerIndex, 0.74);
+    }
+  }
+
+  for (let outer = 0; outer < outerCount; outer += 1) {
+    const index = outerStart + outer;
+
+    if (outer % 2 === 0) {
+      add(0, index, 0.64);
     }
 
-    distances.sort((left, right) => left.distance - right.distance);
-
-    const nearestCount = index === 0 ? Math.min(10, nodeCount - 1) : Math.min(3, nodeCount - 1);
-    for (let nearest = 0; nearest < nearestCount; nearest += 1) {
-      const entry = distances[nearest];
-      if (!entry) {
-        continue;
-      }
-
-      const weight = 1.28 - entry.distance * 2.4;
-      addConnection(index, entry.to, weight);
-    }
-
-    if (index > 0 && nodeCount > 6 && index % 2 === 0) {
-      const echo = ((index + Math.ceil(nodeCount / 3)) % (nodeCount - 1)) + 1;
-      const distance = Math.sqrt(distanceSquared(layout[index], layout[echo]));
-      addConnection(index, echo, 1.05 - distance * 1.9);
+    if (outer % 3 === 0 && outerCount > 1) {
+      const nextOuter = outerStart + ((outer + 1) % outerCount);
+      add(index, nextOuter, 0.62);
     }
   }
 
   return connections.map((connection, index) => ({
     ...connection,
-    phase: index * 0.71 + 0.37,
-    pulseSpeed: 0.00035 + (index % 5) * 0.00008,
+    phase: index * 0.8 + 0.28,
+    pulseSpeed: 0.00028 + (index % 4) * 0.00007,
+    bend: (index % 2 === 0 ? 1 : -1) * (0.2 + (index % 3) * 0.12),
     index,
   }));
 }
 
 function normalizeConnections(connections, layout) {
   const nodeCount = layout.length;
-  const uniquePairs = new Set();
-  const parsedConnections = [];
 
   if (Array.isArray(connections) && connections.length > 0) {
+    const parsed = [];
+    const uniquePairs = new Set();
+
     for (let index = 0; index < connections.length; index += 1) {
-      const parsed = parseConnection(connections[index]);
-      if (!parsed) {
+      const connection = parseConnection(connections[index]);
+      if (!connection) {
         continue;
       }
 
-      const from = Math.floor(toNumber(parsed.from));
-      const to = Math.floor(toNumber(parsed.to));
+      const from = Math.floor(toNumber(connection.from));
+      const to = Math.floor(toNumber(connection.to));
+
       if (from < 0 || to < 0 || from >= nodeCount || to >= nodeCount || from === to) {
         continue;
       }
@@ -232,47 +180,76 @@ function normalizeConnections(connections, layout) {
       }
 
       uniquePairs.add(key);
-      parsedConnections.push({
+      parsed.push({
         from,
         to,
-        weight: clamp(toNumber(parsed.weight) || 0.8, 0.45, 1.35),
-        phase: index * 0.71 + 0.37,
-        pulseSpeed: 0.00035 + (index % 5) * 0.00008,
-        index: parsedConnections.length,
+        weight: clamp(toNumber(connection.weight) || 0.8, 0.45, 1.25),
+        phase: index * 0.8 + 0.28,
+        pulseSpeed: 0.00028 + (index % 4) * 0.00007,
+        bend: (index % 2 === 0 ? 1 : -1) * (0.2 + (index % 3) * 0.12),
+        index: parsed.length,
       });
+    }
+
+    if (parsed.length > 0) {
+      return parsed;
     }
   }
 
-  if (parsedConnections.length > 0) {
-    return parsedConnections;
-  }
-
-  return buildAdaptiveConnections(layout);
+  return createDefaultConnections(layout);
 }
 
 function quadraticPointAt(t, x1, y1, cx, cy, x2, y2) {
   const oneMinusT = 1 - t;
-  const px = oneMinusT * oneMinusT * x1 + 2 * oneMinusT * t * cx + t * t * x2;
-  const py = oneMinusT * oneMinusT * y1 + 2 * oneMinusT * t * cy + t * t * y2;
-  return { x: px, y: py };
+  return {
+    x: oneMinusT * oneMinusT * x1 + 2 * oneMinusT * t * cx + t * t * x2,
+    y: oneMinusT * oneMinusT * y1 + 2 * oneMinusT * t * cy + t * t * y2,
+  };
 }
 
 export class NodeNetwork {
   constructor({ layout = DEFAULT_LAYOUT, connections = null, nodeRadius = 5.4 } = {}) {
     const safeLayout = normalizeLayout(layout);
-    const safeRadius = clamp(toNumber(nodeRadius) || 5.4, 3.2, 11.5);
+    const safeRadius = clamp(toNumber(nodeRadius) || 5.4, 3.2, 11);
 
     this.nodeRadius = safeRadius;
-    this.nodes = safeLayout.map((node, index) => createNodeRuntime(node, index, safeRadius));
+    this.nodes = safeLayout.map((node, index) => {
+      const seed = (Math.sin((index + 1) * 2.11) + 1) * 0.5;
+
+      return {
+        nx: clamp(toNumber(node.x), 0.08, 0.92),
+        ny: clamp(toNumber(node.y), 0.12, 0.86),
+        weight: clamp(toNumber(node.weight) || 1, 0.55, 1.8),
+        drift: clamp(toNumber(node.drift) || 1, 0.2, 1.6),
+        phase: toNumber(node.phase) || index * 0.8,
+        accent: Boolean(node.accent),
+        anchor: Boolean(node.anchor),
+        depth: clamp(toNumber(node.depth) || (0.72 + seed * 0.48), 0.58, 1.25),
+        swayX: 0.6 + seed * 0.8,
+        swayY: 0.6 + (1 - seed) * 0.8,
+        swaySpeedX: 0.00034 + seed * 0.0002,
+        swaySpeedY: 0.00028 + (1 - seed) * 0.0002,
+        orbitRadius: 1.6 + seed * 5,
+        orbitSpeed: 0.00018 + (1 - seed) * 0.00014,
+        pulseSpeed: 0.002 + seed * 0.0014,
+        x: 0,
+        y: 0,
+        radius: safeRadius,
+        alpha: 0.24,
+        spark: 0,
+      };
+    });
+
     this.connections = normalizeConnections(connections, safeLayout);
     this.energy = {
       bass: 0.1,
       mid: 0.12,
       treble: 0.08,
       amplitude: 0.1,
-      flow: 0.18,
+      flow: 0.16,
     };
     this.visibility = 0.24;
+    this.coreAnchor = { x: 0, y: 0 };
   }
 
   render(
@@ -290,169 +267,158 @@ export class NodeNetwork {
       return;
     }
 
+    this.coreAnchor = {
+      x: Number.isFinite(coreAnchor?.x) ? coreAnchor.x : width * 0.5,
+      y: Number.isFinite(coreAnchor?.y) ? coreAnchor.y : height * 0.44,
+    };
+
     const analysis = normalizeAnalysis(normalizedAnalysis);
     this.updateEnergy(analysis, timestamp, isPlaying);
-    this.updateNodes(width, height, timestamp, isPlaying, coreAnchor);
+    this.updateNodes(width, height, timestamp, isPlaying);
     this.drawConnections(ctx, timestamp, isPlaying);
     this.drawNodes(ctx, timestamp);
   }
 
   updateEnergy(analysis, timestamp, isPlaying) {
-    const idleBreath = 0.08 + Math.sin(timestamp * 0.00064) * 0.028;
+    const idleBreath = 0.08 + Math.sin(timestamp * 0.00058) * 0.022;
     const targets = isPlaying
       ? analysis
       : {
-          bass: idleBreath * 0.62,
+          bass: idleBreath * 0.6,
           mid: idleBreath * 0.76,
-          treble: 0.04 + Math.sin(timestamp * 0.0009 + 1.2) * 0.018,
-          amplitude: 0.05 + Math.sin(timestamp * 0.00054 + 0.7) * 0.02,
+          treble: 0.04 + Math.sin(timestamp * 0.00086 + 1.1) * 0.018,
+          amplitude: 0.05 + Math.sin(timestamp * 0.0005 + 0.6) * 0.016,
         };
-    const smoothing = isPlaying ? 0.16 : 0.045;
+    const smoothing = isPlaying ? 0.14 : 0.045;
 
     this.energy.bass = lerp(this.energy.bass, targets.bass, smoothing);
     this.energy.mid = lerp(this.energy.mid, targets.mid, smoothing);
     this.energy.treble = lerp(this.energy.treble, targets.treble, smoothing);
-    this.energy.amplitude = lerp(this.energy.amplitude, targets.amplitude, smoothing * 0.9);
+    this.energy.amplitude = lerp(this.energy.amplitude, targets.amplitude, smoothing * 0.85);
 
-    const targetFlow = clamp(
-      0.2 + targets.mid * 0.58 + targets.treble * 0.28 + (isPlaying ? targets.amplitude * 0.18 : 0),
-      0.12,
-      1,
-    );
-    this.energy.flow = lerp(this.energy.flow, targetFlow, isPlaying ? 0.14 : 0.05);
+    const flowTarget = clamp(0.2 + targets.mid * 0.55 + targets.treble * 0.16, 0.12, 0.94);
+    this.energy.flow = lerp(this.energy.flow, flowTarget, isPlaying ? 0.12 : 0.05);
 
-    const targetVisibility = clamp(
-      0.17 + this.energy.mid * 0.42 + this.energy.bass * 0.18 + this.energy.amplitude * 0.1,
-      0.14,
-      0.78,
+    const visibilityTarget = clamp(
+      0.16 + this.energy.mid * 0.36 + this.energy.bass * 0.14 + this.energy.amplitude * 0.08,
+      0.13,
+      0.7,
     );
-    this.visibility = lerp(this.visibility, targetVisibility, isPlaying ? 0.14 : 0.05);
+    this.visibility = lerp(this.visibility, visibilityTarget, isPlaying ? 0.12 : 0.05);
   }
 
-  updateNodes(width, height, timestamp, isPlaying, coreAnchor) {
-    const motionScale = Math.min(width, height) / 190;
-    const centerX = Number.isFinite(coreAnchor?.x) ? coreAnchor.x : width * 0.5;
-    const centerY = Number.isFinite(coreAnchor?.y) ? coreAnchor.y : height * 0.44;
+  updateNodes(width, height, timestamp, isPlaying) {
+    const motionScale = Math.min(width, height) / 210;
+    const centerX = this.coreAnchor.x;
+    const centerY = this.coreAnchor.y;
     const shiftX = centerX - width * 0.5;
     const shiftY = centerY - height * 0.44;
 
     for (const node of this.nodes) {
       const baseX = node.nx * width + shiftX * (0.44 + node.depth * 0.54);
-      const baseY = node.ny * height + shiftY * (0.44 + node.depth * 0.46);
-      const orbitalGain = (isPlaying ? 1.05 : 0.72) + this.energy.flow * 0.55;
-      const orbitAngle = timestamp * node.orbitSpeed * (isPlaying ? 1.2 : 0.72) + node.phase;
-      const orbitX =
-        Math.cos(orbitAngle)
-        * node.orbitRadius
+      const baseY = node.ny * height + shiftY * (0.44 + node.depth * 0.48);
+      const swayGain = (isPlaying ? 0.9 : 0.56) + this.energy.flow * 0.45;
+      const swayX =
+        Math.sin(timestamp * node.swaySpeedX + node.phase * 1.4)
+        * node.drift
+        * node.swayX
         * motionScale
-        * orbitalGain
-        * (0.8 + node.motionX * 0.4);
+        * swayGain;
+      const swayY =
+        Math.cos(timestamp * node.swaySpeedY + node.phase)
+        * node.drift
+        * node.swayY
+        * motionScale
+        * (0.68 + this.energy.flow * 0.36);
+      const orbitAngle = timestamp * node.orbitSpeed * (isPlaying ? 1 : 0.7) + node.phase;
+      const orbitX = Math.cos(orbitAngle) * node.orbitRadius * motionScale * (0.5 + this.energy.mid * 0.26);
       const orbitY =
-        Math.sin(orbitAngle * 1.18 + node.phase * 0.5)
+        Math.sin(orbitAngle * 1.1)
         * node.orbitRadius
         * motionScale
-        * (0.56 + this.energy.mid * 0.4)
-        * (0.82 + node.motionY * 0.3);
-      const flowX =
-        Math.sin(timestamp * node.flowJitter + node.phase * 1.9)
-        * node.drift
-        * motionScale
-        * (0.68 + this.energy.mid * 1.1);
-      const flowY =
-        Math.cos(timestamp * (node.flowJitter * 0.86) + node.phase * 1.3)
-        * node.drift
-        * motionScale
-        * (0.58 + this.energy.mid * 0.92);
+        * (0.36 + this.energy.mid * 0.22);
 
-      const freeX = baseX + orbitX + flowX;
-      const freeY = baseY + orbitY + flowY;
+      let nextX = baseX + swayX + orbitX;
+      let nextY = baseY + swayY + orbitY;
 
       if (node.anchor) {
-        const anchorPull = clamp(0.72 + this.energy.mid * 0.12, 0.72, 0.9);
-        const anchorX = centerX + Math.cos(orbitAngle * 1.5) * motionScale * 1.8;
-        const anchorY = centerY + Math.sin(orbitAngle * 1.35) * motionScale * 1.4;
-        node.x = lerp(freeX, anchorX, anchorPull);
-        node.y = lerp(freeY, anchorY, anchorPull);
-      } else {
-        node.x = freeX;
-        node.y = freeY;
+        nextX = lerp(nextX, centerX, 0.82);
+        nextY = lerp(nextY, centerY, 0.82);
       }
 
-      const pulseWave = 0.5 + 0.5 * Math.sin(timestamp * node.pulseSpeed + node.phase * 2.4);
-      const bassMass = this.energy.bass * (0.34 + node.weight * 0.48);
-      const midBreath = pulseWave * (0.08 + this.energy.mid * 0.08);
-      const ampEnvelope = this.energy.amplitude * 0.08;
-      node.radius = this.nodeRadius * node.weight * node.depth * (1 + bassMass + midBreath + ampEnvelope);
-      node.coreAlpha = clamp(0.14 + this.visibility * 0.5 + this.energy.mid * 0.12 + pulseWave * 0.06, 0.12, 0.9);
+      node.x = nextX;
+      node.y = nextY;
+
+      const pulse = 0.5 + 0.5 * Math.sin(timestamp * node.pulseSpeed + node.phase * 2.2);
+      const bassMass = this.energy.bass * (0.24 + node.weight * 0.34);
+      const breath = pulse * (0.05 + this.energy.mid * 0.07);
+      const envelope = this.energy.amplitude * 0.05;
+      node.radius = this.nodeRadius * node.weight * node.depth * (1 + bassMass + breath + envelope);
+      node.alpha = clamp(0.1 + this.visibility * 0.46 + pulse * 0.05, 0.1, 0.82);
       node.spark = node.accent
-        ? clamp((this.energy.treble - 0.2) * (0.32 + pulseWave * 0.68), 0, 0.78)
+        ? clamp((this.energy.treble - 0.24) * (0.3 + pulse * 0.55), 0, 0.64)
         : 0;
     }
   }
 
   drawConnections(ctx, timestamp, isPlaying) {
-    const lineBase = 0.03 + this.energy.mid * 0.34 + this.energy.bass * 0.07 + this.energy.amplitude * 0.08;
+    const lineBase = 0.025 + this.energy.mid * 0.24 + this.energy.bass * 0.05 + this.energy.amplitude * 0.04;
 
     ctx.save();
+    ctx.globalCompositeOperation = "lighter";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.shadowColor = `rgba(102, 225, 255, ${0.03 + this.energy.mid * 0.1 + this.energy.flow * 0.04})`;
-    ctx.shadowBlur = 1.6 + this.energy.mid * 4.4 + this.energy.flow * 2;
 
     for (const connection of this.connections) {
       const from = this.nodes[connection.from];
       const to = this.nodes[connection.to];
+
       if (!from || !to) {
         continue;
       }
 
+      const midX = (from.x + to.x) * 0.5;
+      const midY = (from.y + to.y) * 0.5;
+      const towardCoreX = this.coreAnchor.x - midX;
+      const towardCoreY = this.coreAnchor.y - midY;
       const dx = to.x - from.x;
       const dy = to.y - from.y;
       const distance = Math.hypot(dx, dy);
+
       if (distance < 1) {
         continue;
       }
 
       const normalX = -dy / distance;
       const normalY = dx / distance;
-      const wave = 0.5 + 0.5 * Math.sin(timestamp * 0.0008 + connection.phase);
-      let curvature =
-        distance
-        * (0.045 + connection.weight * 0.08)
-        * (0.66 + wave * 0.55 + this.energy.mid * 0.28);
+      const bend = distance * (0.04 + connection.bend * 0.05) * (0.54 + this.energy.flow * 0.34);
+      const controlX = midX + normalX * bend + towardCoreX * 0.2;
+      const controlY = midY + normalY * bend + towardCoreY * 0.2;
+      const breath = 0.84 + 0.16 * Math.sin(timestamp * 0.0008 + connection.phase);
+      const alpha = clamp(lineBase * connection.weight * breath * this.visibility, 0.012, 0.28);
 
-      if (connection.index % 2 === 0) {
-        curvature *= -1;
+      ctx.strokeStyle = `rgba(90, 194, 242, ${alpha})`;
+      ctx.lineWidth = 0.9 + connection.weight * 0.7 + this.energy.flow * 0.28;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
+      ctx.stroke();
+
+      if (connection.index % 5 === 0) {
+        ctx.strokeStyle = `rgba(140, 150, 252, ${alpha * 0.35})`;
+        ctx.lineWidth = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
+        ctx.stroke();
       }
 
-      const controlX = (from.x + to.x) * 0.5 + normalX * curvature;
-      const controlY = (from.y + to.y) * 0.5 + normalY * curvature;
-      const alpha = clamp((lineBase * connection.weight * (0.82 + wave * 0.24)) * this.visibility, 0.015, 0.46);
-      const width = 0.42 + connection.weight * 0.74 + this.energy.mid * 0.58;
-
-      ctx.strokeStyle = `rgba(32, 118, 204, ${alpha * 0.36})`;
-      ctx.lineWidth = width + 1.15;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
-      ctx.stroke();
-
-      ctx.strokeStyle = `rgba(156, 236, 255, ${alpha * 0.9})`;
-      ctx.lineWidth = width;
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.quadraticCurveTo(controlX, controlY, to.x, to.y);
-      ctx.stroke();
-
-      if (isPlaying && (connection.index % 4 === 0 || this.energy.treble > 0.62)) {
+      if (isPlaying && this.energy.treble > 0.5 && connection.index % 6 === 0) {
         const travel = (timestamp * connection.pulseSpeed + connection.phase * 0.1) % 1;
         const pulse = quadraticPointAt(travel, from.x, from.y, controlX, controlY, to.x, to.y);
-        const glow = 0.08 + this.energy.treble * 0.18;
-        const radius = 0.6 + this.energy.treble * 1.3;
-
-        ctx.fillStyle = `rgba(220, 249, 255, ${glow})`;
+        ctx.fillStyle = `rgba(226, 248, 255, ${0.08 + this.energy.treble * 0.16})`;
         ctx.beginPath();
-        ctx.arc(pulse.x, pulse.y, radius, 0, Math.PI * 2);
+        ctx.arc(pulse.x, pulse.y, 0.6 + this.energy.treble * 0.9, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -463,73 +429,44 @@ export class NodeNetwork {
   drawNodes(ctx, timestamp) {
     ctx.save();
 
-    for (const node of this.nodes) {
-      const haloRadius = node.radius * (1.76 + this.energy.mid * 0.62 + this.energy.amplitude * 0.24);
+    for (let index = 0; index < this.nodes.length; index += 1) {
+      const node = this.nodes[index];
+      const shouldDraw = node.anchor || node.accent || index % 3 === 0;
+
+      if (!shouldDraw) {
+        continue;
+      }
+
+      const haloRadius = node.radius * (1.4 + this.energy.mid * 0.38);
       const halo = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, haloRadius);
-      halo.addColorStop(0, `rgba(104, 233, 255, ${clamp(node.coreAlpha * 0.24 + this.energy.mid * 0.05, 0.03, 0.32)})`);
-      halo.addColorStop(0.62, `rgba(58, 166, 236, ${clamp(node.coreAlpha * 0.11 + this.energy.mid * 0.03, 0.015, 0.16)})`);
-      halo.addColorStop(1, "rgba(18, 58, 124, 0)");
+      halo.addColorStop(0, `rgba(112, 230, 255, ${clamp(node.alpha * 0.2 + this.energy.mid * 0.03, 0.025, 0.2)})`);
+      halo.addColorStop(1, "rgba(28, 100, 174, 0)");
       ctx.fillStyle = halo;
       ctx.beginPath();
       ctx.arc(node.x, node.y, haloRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      const core = ctx.createRadialGradient(
-        node.x - node.radius * 0.22,
-        node.y - node.radius * 0.2,
-        node.radius * 0.12,
-        node.x,
-        node.y,
-        node.radius * 1.12,
-      );
-      core.addColorStop(0, `rgba(230, 251, 255, ${clamp(node.coreAlpha * 0.85 + this.energy.bass * 0.08, 0.24, 0.92)})`);
-      core.addColorStop(0.55, `rgba(118, 220, 255, ${clamp(node.coreAlpha * 0.44 + this.energy.mid * 0.08, 0.16, 0.66)})`);
-      core.addColorStop(1, "rgba(34, 116, 196, 0)");
-
-      ctx.shadowColor = `rgba(126, 230, 255, ${0.05 + node.coreAlpha * 0.2})`;
-      ctx.shadowBlur = 1.8 + node.radius * 0.8 + this.energy.mid * 2.2;
-      ctx.fillStyle = core;
+      ctx.fillStyle = `rgba(188, 244, 255, ${clamp(node.alpha * 0.7 + this.energy.bass * 0.04, 0.14, 0.72)})`;
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius * 1.08, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      ctx.fillStyle = `rgba(8, 38, 84, ${0.32 + node.coreAlpha * 0.16})`;
-      ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius * 0.38, 0, Math.PI * 2);
+      ctx.arc(node.x, node.y, node.radius * 0.78, 0, Math.PI * 2);
       ctx.fill();
 
-      if (node.spark > 0.16) {
-        this.drawTrebleAccent(ctx, node, timestamp);
+      ctx.fillStyle = `rgba(34, 88, 154, ${0.3 + node.alpha * 0.18})`;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (node.spark > 0.14) {
+        const angle = timestamp * 0.0022 + node.phase;
+        const sparkX = node.x + Math.cos(angle) * node.radius * 1.2;
+        const sparkY = node.y + Math.sin(angle) * node.radius * 1.2;
+        ctx.fillStyle = `rgba(236, 251, 255, ${0.1 + node.spark * 0.25})`;
+        ctx.beginPath();
+        ctx.arc(sparkX, sparkY, 0.5 + node.spark * 0.7, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
 
     ctx.restore();
-  }
-
-  drawTrebleAccent(ctx, node, timestamp) {
-    const arcRadius = node.radius * (1.35 + node.spark * 0.42);
-    const arcStart = timestamp * 0.0036 + node.phase;
-    const arcSweep = Math.PI * (0.22 + node.spark * 0.44);
-
-    ctx.strokeStyle = `rgba(220, 248, 255, ${0.09 + node.spark * 0.3})`;
-    ctx.lineWidth = 0.9 + node.spark * 0.5;
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, arcRadius, arcStart, arcStart + arcSweep);
-    ctx.stroke();
-
-    ctx.strokeStyle = `rgba(140, 230, 255, ${0.07 + node.spark * 0.2})`;
-    ctx.lineWidth = 0.72;
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, arcRadius * 0.9, arcStart + Math.PI, arcStart + Math.PI + arcSweep * 0.8);
-    ctx.stroke();
-
-    const tipAngle = arcStart + arcSweep;
-    const tipX = node.x + Math.cos(tipAngle) * arcRadius;
-    const tipY = node.y + Math.sin(tipAngle) * arcRadius;
-    ctx.fillStyle = `rgba(236, 252, 255, ${0.16 + node.spark * 0.3})`;
-    ctx.beginPath();
-    ctx.arc(tipX, tipY, 0.68 + node.spark * 0.85, 0, Math.PI * 2);
-    ctx.fill();
   }
 }

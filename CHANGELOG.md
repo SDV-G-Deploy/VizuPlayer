@@ -211,3 +211,31 @@ All notable changes to this project will be documented in this file.
 - `node --check src/visual/nodeNetwork.js`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+
+### Changed (Less HUD, More Cosmic Phenomenon Pass)
+
+- Reworked `src/visual/visualizer.js` to intentionally reduce HUD/diagram read:
+  - cut down fine linear overlays and thin orbital clutter
+  - shifted visual focus toward a larger layered plasma star-core with less literal sphere feel
+  - softened bars into a lower-density integrated corona around the core rather than a separate loud module
+- Simplified and rebalanced `src/visual/nodeNetwork.js`:
+  - reduced default topology density (fewer nodes/links) and lowered graph-like dominance
+  - reshaped connective motion into core-supporting plasma flow curves
+  - kept treble accents selective instead of constant micro-flicker
+- Tuned `index.html` shell styling for lower HUD flavor:
+  - softened frame/label treatment and reduced technical chip-like framing emphasis
+  - added restrained deep-blue/violet atmospheric hierarchy while preserving existing runtime ids
+
+### Changed (Render Complexity Reduction in This Pass)
+
+- Lowered particle counts and reduced high-frequency decorative layers in the canvas path.
+- Reduced spectrum-corona draw density (`coronaStride`) so fewer per-frame radial segments are rendered.
+- Reduced network geometry complexity via fewer default nodes/edges and simpler per-edge styling passes.
+- Removed multiple thin-line decorative operations that had low beauty ROI versus frame cost.
+
+### Validated (Less HUD, More Cosmic Phenomenon Pass)
+
+- `node --check src/visual/visualizer.js`
+- `node --check src/visual/nodeNetwork.js`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`

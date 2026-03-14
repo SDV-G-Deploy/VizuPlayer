@@ -112,3 +112,23 @@ Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pa
   - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
   - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)
 - Pending: manual visual review across bass-heavy, mid-rich, treble-bright, and pause/resume scenarios for final taste-level acceptance.
+
+## 2026-03-15 Update (Less HUD, More Cosmic Phenomenon Pass)
+
+- Completed a second broad visual-only pass focused on reducing HUD/diagram aesthetics and strengthening the scene as a single cosmic phenomenon.
+- Visual changes stayed scoped to `src/visual/visualizer.js`, `src/visual/nodeNetwork.js`, and `index.html` styling; audio/lifecycle/analyser/API systems were untouched.
+- Core outcomes:
+  - fewer thin orbit/graph-like lines and less schematic overlay feel
+  - stronger layered star-core/plasma-bloom center with reduced gray-sphere read
+  - simpler supporting network with fewer nodes/links and more core-coupled flow behavior
+  - improved palette hierarchy with deep blue base, cyan/teal body, selective white-hot highlights, and subtle violet depth accents
+- Render complexity reductions in this pass:
+  - reduced particle counts and decorative micro-geometry
+  - reduced spectrum corona segment density
+  - reduced network default topology and per-frame line styling work
+- Validation completed:
+  - `node --check src/visual/visualizer.js`
+  - `node --check src/visual/nodeNetwork.js`
+  - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
+  - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)
+- Pending: manual track-by-track visual acceptance for final taste-level sign-off.

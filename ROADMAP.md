@@ -66,6 +66,14 @@ Build a reusable web music engine that can run standalone and serve as the audio
   - reframed `index.html` shell styling to support hero visual dominance and stronger composition cohesion while preserving all JS-bound DOM ids
   - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
 
+- Less HUD, More Cosmic Phenomenon pass:
+  - aggressively reduced thin linear HUD-like geometry (fewer orbital strokes, fewer micro arcs, fewer network lines)
+  - rebuilt center language from spherical object read toward layered star-core / plasma bloom / singularity phenomenon
+  - simplified node network into a supporting plasma-flow layer with fewer nodes, fewer links, and lower diagram dominance
+  - introduced subtle temperature hierarchy (deep-space blue base, cyan/teal body, restrained white-hot highs, faint violet accents)
+  - reduced per-frame render complexity by cutting particle counts, lowering spectrum-corona segment density, and removing high-frequency curve clutter
+  - constrained changes to `src/visual/visualizer.js`, `src/visual/nodeNetwork.js`, and `index.html` styling
+  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
 ## Active Next
 
 - Execute manual visual validation of the Cosmic Beauty Reframe on 4 target scenarios:
@@ -83,4 +91,5 @@ Build a reusable web music engine that can run standalone and serve as the audio
 - M3: Visualization and timing sync basics
 - M4: Integration API for game clients
 - M5: Hardening and packaging
+
 

@@ -10,9 +10,9 @@
       font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
       --text-main: #eaf5ff;
       --text-soft: rgba(208, 230, 248, 0.76);
-      --panel-bg-top: rgba(8, 15, 34, 0.84);
-      --panel-bg-bottom: rgba(3, 8, 20, 0.9);
-      --panel-border: rgba(126, 198, 255, 0.26);
+      --panel-bg-top: rgba(7, 13, 31, 0.84);
+      --panel-bg-bottom: rgba(3, 7, 19, 0.9);
+      --panel-border: rgba(118, 184, 236, 0.22);
       --card-bg: rgba(7, 15, 34, 0.62);
       --card-border: rgba(123, 187, 238, 0.2);
       --accent: #88d5ff;
@@ -31,9 +31,10 @@
       padding: 24px;
       color: var(--text-main);
       background:
-        radial-gradient(120% 95% at 50% -14%, rgba(36, 95, 176, 0.46), transparent 58%),
-        radial-gradient(72% 110% at -4% 18%, rgba(26, 78, 152, 0.36), transparent 68%),
-        radial-gradient(82% 110% at 108% 6%, rgba(21, 70, 142, 0.32), transparent 70%),
+        radial-gradient(120% 95% at 50% -14%, rgba(34, 90, 168, 0.42), transparent 58%),
+        radial-gradient(72% 110% at -4% 18%, rgba(24, 74, 146, 0.32), transparent 68%),
+        radial-gradient(82% 110% at 108% 6%, rgba(20, 66, 136, 0.3), transparent 70%),
+        radial-gradient(64% 86% at 66% 22%, rgba(86, 92, 182, 0.16), transparent 74%),
         linear-gradient(162deg, #02050f 0%, #050a18 43%, #030711 100%);
     }
 
@@ -47,8 +48,8 @@
       border: 1px solid var(--panel-border);
       background: linear-gradient(184deg, var(--panel-bg-top), var(--panel-bg-bottom));
       box-shadow:
-        0 34px 84px rgba(1, 5, 15, 0.7),
-        inset 0 1px 0 rgba(180, 228, 255, 0.06);
+        0 30px 70px rgba(1, 5, 15, 0.66),
+        inset 0 1px 0 rgba(180, 228, 255, 0.05);
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(280px, 334px);
       gap: 18px;
@@ -124,12 +125,12 @@
       isolation: isolate;
       border-radius: 24px;
       overflow: hidden;
-      border: 1px solid rgba(132, 203, 255, 0.48);
+      border: 1px solid rgba(128, 194, 240, 0.36);
       background: linear-gradient(182deg, rgba(2, 7, 20, 0.99), rgba(1, 4, 14, 0.99));
       box-shadow:
-        inset 0 0 0 1px rgba(178, 229, 255, 0.12),
-        inset 0 36px 72px rgba(58, 129, 192, 0.1),
-        0 26px 58px rgba(1, 9, 25, 0.6);
+        inset 0 0 0 1px rgba(174, 224, 255, 0.08),
+        inset 0 28px 64px rgba(54, 116, 176, 0.08),
+        0 24px 54px rgba(1, 9, 25, 0.56);
     }
 
     .visualizer-shell::before,
@@ -141,12 +142,12 @@
     }
 
     .visualizer-shell::before {
-      background: radial-gradient(66% 42% at 50% 14%, rgba(123, 214, 255, 0.13), transparent 70%);
+      background: radial-gradient(66% 42% at 50% 14%, rgba(114, 204, 248, 0.1), transparent 70%);
       mix-blend-mode: screen;
     }
 
     .visualizer-shell::after {
-      background: linear-gradient(180deg, rgba(174, 226, 255, 0.05), rgba(44, 88, 142, 0.02) 26%, transparent 56%);
+      background: linear-gradient(180deg, rgba(164, 216, 246, 0.04), rgba(40, 84, 136, 0.02) 26%, transparent 56%);
     }
 
     #visualizer-canvas {
@@ -157,19 +158,17 @@
 
     .visualizer-label {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      padding: 5px 11px;
-      border-radius: 999px;
-      border: 1px solid rgba(143, 217, 255, 0.5);
-      background: rgba(7, 32, 62, 0.56);
-      color: rgba(192, 236, 255, 0.94);
-      font-size: 0.68rem;
+      left: 14px;
+      bottom: 12px;
+      padding: 0;
+      border: none;
+      background: none;
+      color: rgba(182, 224, 246, 0.62);
+      font-size: 0.64rem;
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.13em;
       text-transform: uppercase;
       pointer-events: none;
-      backdrop-filter: blur(2px);
     }
 
     .visualizer-hint {
@@ -427,3 +426,4 @@
   <script type="module" src="./src/core/app.js"></script>
 </body>
 </html>
+
