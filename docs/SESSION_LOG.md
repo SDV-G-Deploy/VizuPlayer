@@ -76,3 +76,56 @@
 
 - Added audio asset `assets/music/dwarwo2.mp3` to repository history per user request.
 - Prepared follow-up commit after lifecycle hardening commit without amending prior commit.
+
+## 2026-03-14 (Stop/Loading Race Closure Pass)
+
+- Implemented targeted race fix with no architecture widening:
+  - added active in-flight load `AbortController` in `src/core/app.js`
+  - abort triggered on `STOP` invalidation and on superseding latest-load enqueue
+  - load worker now settles old in-flight load promptly and proceeds to newest request
+- Propagated `AbortSignal` through load stack:
+  - `src/core/app.js -> src/audio/musicPlayer.js -> src/audio/audioEngine.js`
+  - `AudioEngine.waitForAudioCanPlay(...)` now listens for abort and rejects immediately
+- Added ended-vs-stop guard in `src/core/app.js` (`ended` handled only when phase is still `playing`).
+- Ran syntax checks:
+  - `node --check src/core/app.js`
+  - `node --check src/audio/musicPlayer.js`
+  - `node --check src/audio/audioEngine.js`
+- Updated docs (`CHANGELOG.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, `docs/CHANGELOG_AGENT.md`, this log).
+
+## 2026-03-14 (Baseline Acceptance Confirmation)
+
+- Confirmed manual browser smoke scenarios passed for lifecycle/load race behavior:
+  - local file load -> immediate stop -> new load
+  - URL/demo load -> immediate stop -> new load
+  - rapid load A -> load B
+  - stop near ended boundary
+  - parity checks through UI and window.vizuPlayer
+- Completed post-fix re-audit and accepted lifecycle/load hardening as stable baseline for the next phase.
+- Remaining known runtime noise is missing favicon in browser console; classified as non-blocking.
+
+## 2026-03-14 (Regression Check Layer Pass)
+
+- Added lightweight deterministic regression harness at `scripts/regression/command-phase-regression.mjs` with no external test framework.
+- Added a test-safe bootstrap seam in `src/core/app.js`:
+  - exported `bootstrap(options)` for dependency-injected headless runtime setup
+  - guarded auto-bootstrap with `globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__`
+- Implemented command/phase regression scenarios covering:
+  - initial bootstrap expectations
+  - load -> ready
+  - play from ready
+  - pause from playing
+  - stop from playing
+  - stop during loading
+  - latest-wins rapid load A -> B
+  - stale completion suppression against newer request state
+  - ended callback guard against explicit stop overwrite
+  - UI/public API parity entrypoint assumptions
+- Validation run:
+  - `node --check src/core/app.js`
+  - `node --check src/audio/musicPlayer.js`
+  - `node --check src/audio/audioEngine.js`
+  - `node --check scripts/regression/command-phase-regression.mjs`
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
+- Scope intentionally held to regression-check layer only; no integration API shaping started in this pass.
+

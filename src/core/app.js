@@ -72,17 +72,28 @@ function decayAnalysis(values, alpha) {
   };
 }
 
-async function bootstrap() {
-  const logger = createConsoleLogger("[VizuPlayer]");
-  const audioEngine = new AudioEngine();
-  const player = new MusicPlayer(audioEngine);
-  const ui = new PlayerUI(APP_CONFIG.ui);
-  ui.initialize(APP_CONFIG.playback.bundledDemoTrackUrl);
+export async function bootstrap(options = {}) {
+  const appConfig = options.appConfig || APP_CONFIG;
+  const logger = options.logger || createConsoleLogger("[VizuPlayer]");
+  const windowTarget = options.windowTarget || window;
+  const requestFrame = options.requestAnimationFrame || requestAnimationFrame;
+  const cancelFrame = options.cancelAnimationFrame || cancelAnimationFrame;
+  const createAudioEngine = options.createAudioEngine || (() => new AudioEngine());
+  const createPlayer = options.createPlayer || ((audioEngineInstance) => new MusicPlayer(audioEngineInstance));
+  const createUI = options.createUI || (() => new PlayerUI(appConfig.ui));
+  const createVisualizer = options.createVisualizer || ((visualizerOptions) => new Visualizer(visualizerOptions));
+  const createAnalyser = options.createAnalyser || ((analyserOptions) => new AudioAnalyser(analyserOptions));
+  const exposeRuntimeOnWindow = options.exposeRuntimeOnWindow !== false;
 
-  const visualizer = new Visualizer({
+  const audioEngine = createAudioEngine();
+  const player = createPlayer(audioEngine);
+  const ui = createUI();
+  ui.initialize(appConfig.playback.bundledDemoTrackUrl);
+
+  const visualizer = createVisualizer({
     canvas: ui.getVisualizerCanvas(),
-    barCount: APP_CONFIG.visualizer.barCount,
-    network: APP_CONFIG.visualizer.network,
+    barCount: appConfig.visualizer.barCount,
+    network: appConfig.visualizer.network,
   });
 
   let analyser = null;
@@ -96,6 +107,7 @@ async function bootstrap() {
   let latestRequestedLoadId = 0;
   let queuedLoadRequest = null;
   let loadWorkerRunning = false;
+  let activeLoadController = null;
 
   const renderAnalysisIfChanged = (values) => {
     const safeValues = sanitizeAnalysis(values);
@@ -169,16 +181,21 @@ async function bootstrap() {
       return analyser;
     }
 
-    const graph = await audioEngine.initializeGraph(APP_CONFIG.analyser);
+    const graph = await audioEngine.initializeGraph(appConfig.analyser);
 
-    analyser = new AudioAnalyser({
+    analyser = createAnalyser({
       analyserNode: graph.analyserNode,
       audioContext: graph.audioContext,
-      bands: APP_CONFIG.analyser.bands,
+      bands: appConfig.analyser.bands,
     });
 
     if (!endedListenerAttached) {
       graph.audioElement.addEventListener("ended", () => {
+        const state = player.getState();
+        if (state.phase !== PLAYER_PHASES.PLAYING) {
+          return;
+        }
+
         player.markEnded();
         setAnalysis(ZERO_ANALYSIS);
         setStatusForPhase(PLAYER_PHASES.ENDED);
@@ -192,8 +209,15 @@ async function bootstrap() {
     return analyser;
   };
 
+  const abortActiveLoad = () => {
+    if (activeLoadController && !activeLoadController.signal.aborted) {
+      activeLoadController.abort();
+    }
+  };
+
   const invalidatePendingLoads = () => {
     latestRequestedLoadId = ++loadRequestSequence;
+    abortActiveLoad();
 
     if (queuedLoadRequest) {
       queuedLoadRequest.resolve({ status: "cancelled" });
@@ -218,8 +242,9 @@ async function bootstrap() {
         applyPhase(PLAYER_PHASES.LOADING, request.loadingStatus);
 
         try {
+          activeLoadController = new AbortController();
           await ensureAnalyser();
-          await request.perform();
+          await request.perform(activeLoadController.signal);
 
           if (latestRequestedLoadId !== request.requestId) {
             logger.info("stale-load-success-ignored", {
@@ -255,6 +280,8 @@ async function bootstrap() {
             requestId: request.requestId,
           });
           request.reject(error instanceof Error ? error : new Error(message));
+        } finally {
+          activeLoadController = null;
         }
       }
     } finally {
@@ -274,6 +301,10 @@ async function bootstrap() {
     latestRequestedLoadId = requestId;
 
     return new Promise((resolve, reject) => {
+      if (loadWorkerRunning) {
+        abortActiveLoad();
+      }
+
       if (queuedLoadRequest) {
         queuedLoadRequest.resolve({ status: "superseded" });
       }
@@ -314,8 +345,9 @@ async function bootstrap() {
       trackLabel: trimmedUrl,
       loadingStatus,
       successStatus,
-      perform: () => player.loadDemoTrack(trimmedUrl, APP_CONFIG.analyser, {
-        timeoutMs: APP_CONFIG.playback.urlLoadTimeoutMs,
+      perform: (signal) => player.loadDemoTrack(trimmedUrl, appConfig.analyser, {
+        timeoutMs: appConfig.playback.urlLoadTimeoutMs,
+        signal,
       }),
       logPayload: () => ({
         mode,
@@ -340,7 +372,7 @@ async function bootstrap() {
         trackLabel: file.name,
         loadingStatus: `loading local file: ${file.name}`,
         successStatus: `loaded local file: ${file.name}`,
-        perform: () => player.loadLocalFile(file, APP_CONFIG.analyser),
+        perform: (signal) => player.loadLocalFile(file, appConfig.analyser, { signal }),
         logPayload: () => ({
           mode: "local",
           name: file.name,
@@ -358,7 +390,7 @@ async function bootstrap() {
     },
 
     async [API_COMMANDS.LOAD_BUNDLED_DEMO_TRACK]() {
-      const demoUrl = APP_CONFIG.playback.bundledDemoTrackUrl;
+      const demoUrl = appConfig.playback.bundledDemoTrackUrl;
       ui.setTrackUrl(demoUrl);
 
       return queueUrlLoad(demoUrl, {
@@ -445,13 +477,13 @@ async function bootstrap() {
       frameAnalysis = sanitizeAnalysis(frame.analysis);
       spectrumData = frame.frequencyData;
 
-      if (APP_CONFIG.analyser.enableLogging
-        && timestamp - lastLogTime >= APP_CONFIG.analyser.logIntervalMs) {
+      if (appConfig.analyser.enableLogging
+        && timestamp - lastLogTime >= appConfig.analyser.logIntervalMs) {
         lastLogTime = timestamp;
         console.log("[VizuPlayer analysis]", frameAnalysis);
       }
     } else if (phase === PLAYER_PHASES.PAUSED) {
-      frameAnalysis = decayAnalysis(currentAnalysis, APP_CONFIG.visualizer.pausedAnalysisDecayAlpha);
+      frameAnalysis = decayAnalysis(currentAnalysis, appConfig.visualizer.pausedAnalysisDecayAlpha);
     } else {
       frameAnalysis = ZERO_ANALYSIS;
     }
@@ -465,18 +497,18 @@ async function bootstrap() {
     });
     visualizer.render(timestamp);
 
-    animationFrameId = requestAnimationFrame(renderFrame);
+    animationFrameId = requestFrame(renderFrame);
   };
 
   const startRenderLoop = () => {
     if (animationFrameId === null) {
-      animationFrameId = requestAnimationFrame(renderFrame);
+      animationFrameId = requestFrame(renderFrame);
     }
   };
 
   const stopRenderLoop = () => {
     if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
+      cancelFrame(animationFrameId);
       animationFrameId = null;
     }
   };
@@ -494,13 +526,13 @@ async function bootstrap() {
   setAnalysis(ZERO_ANALYSIS);
   startRenderLoop();
 
-  window.addEventListener("beforeunload", () => {
+  windowTarget.addEventListener("beforeunload", () => {
     stopRenderLoop();
     visualizer.destroy();
   });
 
-  window.vizuPlayer = {
-    config: APP_CONFIG,
+  const runtimeApi = {
+    config: appConfig,
     commands: Object.freeze({
       play: () => executeCommand(API_COMMANDS.PLAY),
       pause: () => executeCommand(API_COMMANDS.PAUSE),
@@ -521,8 +553,17 @@ async function bootstrap() {
     ui,
     visualizer,
   };
+
+  if (exposeRuntimeOnWindow) {
+    windowTarget.vizuPlayer = runtimeApi;
+  }
+
+  return runtimeApi;
 }
 
-bootstrap().catch((error) => {
-  console.error("Failed to bootstrap VizuPlayer", error);
-});
+if (!globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__) {
+  bootstrap().catch((error) => {
+    console.error("Failed to bootstrap VizuPlayer", error);
+  });
+}
+

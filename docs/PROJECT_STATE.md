@@ -2,11 +2,11 @@
 
 ## Current Focus
 
-Lifecycle and load-state hardening pass for the existing player + visualizer foundation.
+Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pass, manual browser smoke, and post-fix re-audit.
 
 ## Current Stage
 
-- Stage: 3 - Node network foundation + lifecycle hardening
+- Stage: 3 - Lifecycle/load stable baseline accepted
 - Date: 2026-03-14
 
 ## Implemented In This Pass
@@ -40,14 +40,48 @@ Lifecycle and load-state hardening pass for the existing player + visualizer fou
 - URL/demo load no longer hangs forever without terminal completion.
 - Control status and enabled/disabled behavior are phase-derived instead of spread across ad-hoc booleans.
 - Metrics and visualizer input return to idle semantics consistently for pause/ended/stop transitions.
+- Manual browser smoke and post-fix re-audit passed; lifecycle/load baseline is accepted for the next phase.
+- Lightweight regression harness now provides deterministic baseline checks for command/phase transitions and race-sensitive lifecycle boundaries.
 
 ## Known Limitations
 
 - True transport-level cancellation of network fetches is not implemented; stale-load result suppression is used.
-- Full behavioral validation still requires browser runtime smoke checks.
+- Non-blocking console noise remains for missing favicon in browser runtime.
 
 ## Next Targets
 
-- Run focused browser smoke tests for rapid-load races and timeout/error paths.
-- Add small targeted tests for phase transitions and load queue behavior when a browser harness is available.
-- Keep future feature work on top of this hardened lifecycle baseline.
+- Keep the lightweight regression harness green as a required baseline gate for lifecycle/load changes.
+- Expand targeted coverage only when new lifecycle edges are introduced.
+- Continue future feature work on top of this hardened lifecycle baseline.
+
+## 2026-03-14 Update (Stop/Loading Race Closure)
+
+- Added deterministic in-flight load cancellation path by propagating `AbortSignal` from `src/core/app.js` through `src/audio/musicPlayer.js` to `src/audio/audioEngine.js`.
+- `STOP` during `loading` now aborts active load wait immediately, preventing load worker lock while old request is unresolved.
+- Superseding latest-load requests now abort the currently active in-flight request so the next queued load can begin immediately.
+- Stale completion/error suppression remains in place (`requestId` / latest-request checks).
+- Added a phase guard in the `ended` listener so explicit stop state is not overwritten by late `ended` callbacks.
+- Syntax validation completed for touched JS files with `node --check`; manual browser smoke and post-fix re-audit are now completed and passed.
+
+## 2026-03-14 Update (Regression Check Layer Pass)
+
+- Added `scripts/regression/command-phase-regression.mjs` as a minimal, deterministic, no-framework check layer.
+- Added a test-safe bootstrap seam in `src/core/app.js` (`bootstrap(options)`) plus guarded auto-bootstrap (`globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__`) for headless checks.
+- Automated coverage now includes:
+  - initial bootstrap expectations
+  - load -> ready
+  - play from ready
+  - pause from playing
+  - stop from playing
+  - stop during loading
+  - rapid load A -> load B latest-wins behavior
+  - stale completion suppression against newer request state
+  - ended callback guard against explicit stop overwrite
+  - UI/public API orchestration entrypoint parity assumptions
+- Validation completed:
+  - `node --check src/core/app.js`
+  - `node --check src/audio/musicPlayer.js`
+  - `node --check src/audio/audioEngine.js`
+  - `node --check scripts/regression/command-phase-regression.mjs`
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
+

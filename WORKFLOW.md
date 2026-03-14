@@ -1,4 +1,4 @@
-﻿# WORKFLOW
+# WORKFLOW
 
 ## Working Location
 
@@ -16,10 +16,12 @@ All development is performed locally in:
 
 ## Local Checks Template
 
+- Syntax checks: `node --check` on all touched JS/MJS files
+- Regression harness: `node scripts/regression/command-phase-regression.mjs`
 - Build: TBD
 - Unit tests: TBD
 - Integration tests: TBD
-- Manual smoke test: TBD
+- Manual smoke test: targeted browser smoke when behavior cannot be validated headlessly
 
 ## Push Gate
 
@@ -33,3 +35,4 @@ After each code pass, update at least:
 - `CHANGELOG.md` (entry for notable change)
 - Any architecture/workflow file affected by the change
 - Root `AGENTS.md` if process rules were updated
+

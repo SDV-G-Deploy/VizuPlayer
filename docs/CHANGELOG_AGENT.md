@@ -74,3 +74,41 @@
 ### Updated (Asset Add + Push Follow-up)
 
 - Added `assets/music/dwarwo2.mp3` to repository as an additional audio/demo asset by request.
+
+### Updated (Stop/Loading Race Closure Pass)
+
+- Added deterministic in-flight load cancellation for orchestration races:
+  - active load is aborted when `STOP` is issued during loading
+  - active load is aborted when a newer latest-load request supersedes it
+- Kept latest-wins behavior and stale completion suppression unchanged (request-id guard remains source of truth).
+- Propagated `AbortSignal` through `app -> musicPlayer -> audioEngine` for both local-file and URL/demo load paths.
+- Added phase guard on `ended` event handling to avoid explicit `stop` being overwritten by late `ended` callbacks.
+- Completed syntax validation with `node --check` on all touched JS files.
+
+### Updated (Baseline Acceptance Confirmation)
+
+- Confirmed lifecycle/load baseline acceptance after targeted abort/cancel fix-pass, manual browser smoke, and post-fix re-audit.
+- Confirmed UI and window.vizuPlayer command-path parity under the focused race scenarios.
+- Documented only remaining known runtime noise as missing favicon console warning (non-blocking).
+
+### Updated (Regression Check Layer Pass)
+
+- Added `scripts/regression/command-phase-regression.mjs` as a lightweight deterministic regression layer (no external framework).
+- Added regression coverage for command/phase and race-sensitive lifecycle behavior:
+  - initial state/bootstrap expectations
+  - load -> ready
+  - play from ready
+  - pause from playing
+  - stop from playing
+  - stop during loading
+  - latest-wins load A -> B
+  - stale completion suppression
+  - ended-vs-stop guarded boundary
+  - UI/public API command-path parity assumptions
+- Updated `src/core/app.js` for harnessability without widening product scope:
+  - `bootstrap(options)` export with injectable runtime dependencies
+  - guarded default auto-bootstrap (`globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__`)
+- Completed validation for the pass:
+  - syntax checks via `node --check` on touched JS/MJS files
+  - regression harness execution result: `SUMMARY 10/10 passing`
+

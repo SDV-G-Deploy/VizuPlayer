@@ -36,3 +36,51 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Audio asset `assets/music/dwarwo2.mp3`.
+
+### Fixed (Stop/Loading Race Closure Pass)
+
+- STOP during loading now aborts the active in-flight load wait and releases the load worker immediately.
+- Superseding load requests now abort the active in-flight load, so the next request can start without waiting for old timeout completion.
+- Stale async completion suppression remains enforced after abort-triggered failures.
+
+### Changed (Stop/Loading Race Closure Pass)
+
+- src/core/app.js now tracks an active load AbortController and aborts it on stop invalidation and superseding loads.
+- Load orchestration now passes AbortSignal through MusicPlayer into AudioEngine.waitForAudioCanPlay(...).
+- Ended handler in src/core/app.js now ignores late ended callbacks unless the runtime phase is still playing.
+
+### Validated (Lifecycle/Load Baseline Acceptance)
+
+- Lifecycle/load hardening baseline is accepted after targeted abort/cancel fix-pass, manual browser smoke, and post-fix re-audit.
+- Acceptance includes parity confirmation for UI control path and window.vizuPlayer command path.
+- Remaining known runtime noise: missing favicon console warning (non-blocking).
+
+### Added (Regression Check Pass)
+
+- Added lightweight deterministic regression harness: `scripts/regression/command-phase-regression.mjs`.
+- Added explicit scenario coverage for command/phase transitions and lifecycle races:
+  - initial bootstrap state
+  - load -> ready
+  - play from ready
+  - pause from playing
+  - stop from playing
+  - stop during loading
+  - rapid latest-wins load A -> B
+  - stale completion suppression
+  - ended callback guard after explicit stop
+  - UI/public API orchestration entrypoint parity assumptions
+
+### Changed (Regression Check Pass)
+
+- `src/core/app.js` now exports `bootstrap(options)` with optional dependency injection seams for headless harness execution.
+- `src/core/app.js` auto-bootstrap is now guarded by `globalThis.__VIZUPLAYER_DISABLE_AUTO_BOOTSTRAP__` for deterministic non-browser regression runs.
+- Browser runtime path remains default (`bootstrap()` still auto-runs when the guard is not set).
+
+### Validated (Regression Check Pass)
+
+- `node --check src/core/app.js`
+- `node --check src/audio/musicPlayer.js`
+- `node --check src/audio/audioEngine.js`
+- `node --check scripts/regression/command-phase-regression.mjs`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 10/10 passing`
+
