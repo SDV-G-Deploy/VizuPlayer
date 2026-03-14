@@ -138,3 +138,21 @@ All notable changes to this project will be documented in this file.
 - `node --check scripts/regression/unload-source-reporting-regression.mjs`
 - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+
+### Changed (Beauty Slice: Scene Hierarchy Rebalance)
+
+- Applied a narrow canvas-only composition pass in `src/visual/visualizer.js`:
+  - reduced always-on background noise (stars/grid/nebula motion/presence)
+  - reduced global amplitude pumping across non-hero layers
+  - rebalanced render order so spectrum bars read as the hero layer
+  - tightened idle/ready/paused quiet behavior without changing phase semantics
+- Applied supporting-layer restraint tuning in `src/visual/nodeNetwork.js`:
+  - lowered baseline visibility, glow, flicker, and motion intensity
+  - reduced treble accent aggressiveness and idle animation energy
+  - preserved existing topology/layout contract and constructor API
+
+### Validated (Beauty Slice: Scene Hierarchy Rebalance)
+
+- `node --check src/visual/visualizer.js`
+- `node --check src/visual/nodeNetwork.js`
+- `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`

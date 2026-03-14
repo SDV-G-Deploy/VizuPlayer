@@ -140,3 +140,19 @@
   - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
   - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - Local browser repro note: no dedicated local browser repro script for this exact scenario was present in the workspace, so verification was done with a targeted headless regression check.
+
+## 2026-03-15 (Beauty Slice: Scene Hierarchy Rebalance)
+
+- Implemented a narrow canvas-only beauty pass with no UI/API/lifecycle scope expansion.
+- Updated `src/visual/visualizer.js` to enforce compositional hierarchy:
+  - bars promoted to hero layer via render-order rebalance
+  - stars/grid/nebula/pulse/frame intensity reduced for supporting roles
+  - reduced idle and paused visual noise by lowering always-on activity floors
+- Updated `src/visual/nodeNetwork.js` to support (not compete with) bars:
+  - reduced idle energy, visibility, glow, flicker, and motion gain
+  - lowered node/connection luminosity and treble-accent aggressiveness
+- Validation completed:
+  - `node --check src/visual/visualizer.js`
+  - `node --check src/visual/nodeNetwork.js`
+  - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
+- Manual visual smoke was not executable in this CLI-only environment (no interactive browser view), so visual confirmation remains pending in-browser for states: `idle`, `ready`, `playing`, `paused`, `stop/unload`.
