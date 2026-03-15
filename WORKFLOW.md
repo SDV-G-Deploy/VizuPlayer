@@ -6,13 +6,30 @@ All development is performed locally in:
 
 `C:\ForCodexAnd\VizuPlayer`
 
+## Track Gate (Required)
+
+Before implementation, declare one target track:
+
+1. **Core demo improvement** (this repository)
+2. **App/product development** (separate app-surface track)
+
+Do not silently mix these tracks in one default pass.
+
 ## Delivery Sequence
 
-1. Implement changes locally.
-2. Run local checks.
-3. Update root `AGENTS.md` when process/policy changed.
-4. Update project documentation (`*.md`) with latest progress and plan.
-5. Push to GitHub only if checks are green.
+1. Declare target track for the pass.
+2. Implement scoped changes locally.
+3. Run local checks.
+4. Update docs affected by the pass.
+5. If positioning/process changed, sync governance docs in the same pass.
+6. Push to GitHub only if checks are green.
+
+## UX/UI And Visual Work Gate
+
+Before broad UX/UI/visual work, be explicit about intent:
+
+- If the goal is **Core demo improvement**, keep the pass tied to integration clarity/validation.
+- If the goal is **App/product development**, execute that work on the app-surface track instead of expanding this repo scope.
 
 ## Local Checks Template
 
@@ -29,10 +46,16 @@ Do not push if any required check fails.
 
 ## Post-Pass Documentation Update
 
-After each code pass, update at least:
+After each pass, update relevant docs. Typical minimum set:
 
 - `ROADMAP.md` (current position, done, next)
-- `CHANGELOG.md` (entry for notable change)
-- Any architecture/workflow file affected by the change
-- Root `AGENTS.md` if process rules were updated
+- `CHANGELOG.md` (notable changes)
+- `docs/PROJECT_STATE.md` and `docs/SESSION_LOG.md` (status trace)
+- Root `AGENTS.md` if policy/governance changed
 
+If project positioning changed, governance docs must stay aligned in the same pass:
+
+- `AGENTS.md`
+- `WORKFLOW.md`
+- `CONTRIBUTING.md`
+- `CHECKLIST.md`

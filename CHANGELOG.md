@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (Core vs App Governance Sync)
+
+- Synced governance docs to lock repository operating model as **Core / Engine / Integration Demo**.
+- Added explicit Core-vs-App track split rules to prevent silent mixing in one implementation stream.
+- Added required target declaration before broad UX/UI or visual passes (Core demo improvement vs App/product development).
+- Clarified that demo surface evolution is allowed when it stays honest as integration validation, not consumer flagship scope.
+- Added mandatory docs-sync rule for project positioning changes across governance/process files and roadmap.
+
 ### Changed (Core Positioning & Docs Sync)
 
 - Repositioned VizuPlayer as **Core / Engine / Integration Demo** in project documentation.
@@ -279,4 +287,4 @@ All notable changes to this project will be documented in this file.
 ### Validated (Flagship Product Surface Reframe)
 
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
-- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+- `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting``r`n

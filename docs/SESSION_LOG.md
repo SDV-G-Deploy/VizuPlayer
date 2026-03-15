@@ -1,5 +1,19 @@
 # SESSION_LOG
 
+## 2026-03-15 (Core vs App Governance Sync Pass)
+
+- Executed a governance/docs-only pass to formalize repository operating model boundaries.
+- Locked VizuPlayer role as Core / Engine / Integration Demo in process/governance docs.
+- Formalized Core and App as separate tracks with no silent mixing by default.
+- Added explicit pre-pass target requirement before broad UX/UI or visual work:
+  - core demo improvement
+  - app/product development
+- Synced governance/process/status docs so positioning and workflow stay aligned.
+- Scope discipline maintained:
+  - no src/* changes
+  - no audio/lifecycle/analyser/API internal changes
+  - no new visual/UI implementation pass
+
 ## 2026-03-15 (Core Demo Surface Cohesion Pass)
 
 - Executed a coherent UI/copy shell pass in `index.html` to align visible surface with `VizuPlayer Core` positioning.
@@ -220,4 +234,4 @@
 - Validation completed:
   - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
   - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
-- Manual visual/browser acceptance remains pending for desktop/mobile interaction polish.
+- Manual visual/browser acceptance remains pending for desktop/mobile interaction polish.`r`n

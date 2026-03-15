@@ -2,6 +2,15 @@
 
 ## 2026-03-15
 
+### Updated (Core vs App Governance Sync Pass)
+
+- Synced governance/process docs to lock VizuPlayer = Core / Engine / Integration Demo as the default repository role.
+- Added explicit Core/App track model and no-silent-mixing rule across AGENTS.md, WORKFLOW.md, CONTRIBUTING.md, and CHECKLIST.md.
+- Added explicit gate before broad UX/UI or visual work: choose Core demo improvement or App/product development first.
+- Updated roadmap/status docs so operating model and execution flow stay aligned in one pass.
+
+## 2026-03-15
+
 ### Updated (Core Demo Surface Cohesion Pass)
 
 - Reworked `index.html` into a more coherent core-first product surface for integration/demo usage.
@@ -172,4 +181,4 @@
 - Preserved all JS/runtime DOM id bindings and intentionally avoided audio/lifecycle/API contract scope.
 - Validation completed:
   - `node scripts/regression/command-phase-regression.mjs` (`SUMMARY 13/13 passing`)
-  - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)
+  - `node scripts/regression/unload-source-reporting-regression.mjs` (`PASS post-unload source-reporting`)`r`n

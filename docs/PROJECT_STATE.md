@@ -44,6 +44,13 @@ Current work focuses on core reliability, integration readiness, consumption cla
 - Add integration-oriented usage examples and packaging readiness details
 - Keep demo surface hygienic for validation while avoiding app-surface scope creep
 
+## 2026-03-15 Update (Core vs App Governance Sync)
+
+- Locked operating model in governance docs: this repo is Core / Engine / Integration Demo by default.
+- Formalized separate tracks for Core work and App/product work to avoid silent scope mixing.
+- Added explicit target gate before broad UX/UI or visual passes (Core demo improvement vs App/product development).
+- Synced AGENTS.md, WORKFLOW.md, CONTRIBUTING.md, CHECKLIST.md, and ROADMAP.md to the same split.
+
 ## Validation Baseline
 
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
@@ -70,4 +77,4 @@ Current work focuses on core reliability, integration readiness, consumption cla
 - Lifecycle/load hardening and race-closure pass
 - Thin facade contract shaping and corrective surface tightening
 - Deterministic regression-check layer
-- Visual/demo evolution work that remains useful as integration sandbox capability
+- Visual/demo evolution work that remains useful as integration sandbox capability`r`n

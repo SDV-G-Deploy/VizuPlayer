@@ -6,6 +6,16 @@ VizuPlayer is positioned as **Core / Engine / Integration Demo**.
 
 This repository is the reusable runtime foundation for browser integrations and future app surfaces, not the final consumer product layer.
 
+## Governance Lock (2026-03-15)
+
+- VizuPlayer repository remains core-first and does not become the flagship consumer app by default.
+- Core work and App/product work run as separate tracks and must not silently merge into one pass.
+- Broad UX/UI or visual passes require explicit target declaration first:
+  - Core demo improvement
+  - App/product development
+- Demo surface evolution is valid when it improves integration clarity and stays honest about its role.
+- When project positioning changes, governance/process docs must be synced in the same implementation pass.
+
 ## Current Position
 
 - Stage: Core baseline stabilized and reusable
@@ -66,6 +76,7 @@ This repository is the reusable runtime foundation for browser integrations and 
 - Tighten API documentation for consumption readiness
 - Add/refresh integration usage examples
 - Continue separation discipline between core runtime work and app-surface product work
+- Apply explicit Core-vs-App track declaration in each future pass before UX/UI scope expansion
 
 ## Explicit Non-Goals (This Repository)
 
