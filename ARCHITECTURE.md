@@ -1,73 +1,93 @@
-# ARCHITECTURE
+﻿# ARCHITECTURE
 
 ## Purpose
 
-High-level architecture notes for the VizuPlayer engine.
+High-level architecture for **VizuPlayer Core** as a reusable browser audio engine and integration demo surface.
 
-## Target Platforms
+## Strategic Role
 
-- Web browsers (desktop/mobile)
-- Browser game runtime environments
+VizuPlayer is the core layer of the stack:
 
-## Current Layering Direction
+- Owns runtime playback semantics and lifecycle correctness
+- Owns Web Audio analysis pipeline and stable host-facing facade
+- Provides a demo/sandbox surface to validate integration behavior
 
-- Audio engine layer
-- Playback coordination + phase model layer
-- Analyser layer
-- UI/player controls layer
-- Visualizer layer
-- Game integration API layer (later stage)
+It is not the standalone flagship consumer product surface.
 
-## Implemented Foundation (Current)
+## Core Responsibilities
 
-- `src/audio/audioEngine.js`:
-  - owns `AudioContext`
-  - owns `HTMLAudioElement`
-  - builds stable media source -> analyser -> destination chain
-  - loads local `File` sources and demo/url sources
-  - revokes stale object URLs when replacing local tracks
-  - exposes deterministic source-load timeout support for URL/demo loading and abort-aware load-wait cancellation
-- `src/audio/musicPlayer.js`:
-  - owns explicit playback phases (`idle/loading/ready/playing/paused/ended/error`)
-  - tracks canonical load/playback metadata
-  - exposes state transitions used by app orchestration
-- `src/audio/analyser.js`:
-  - samples analyser data each frame
-  - computes `bass`, `mid`, `treble`, `amplitude`
-- `src/ui/playerUI.js`:
-  - binds DOM controls/events
-  - renders status and live analysis values
-  - updates button/input enabled/disabled states
-- `src/core/app.js`:
-  - bootstraps all modules
-  - centralizes command orchestration for both UI and public API
-  - serializes load requests with latest-wins semantics
-  - suppresses stale load completion commits
-  - aborts active in-flight load wait on stop invalidation and superseding latest-load requests
-  - provides canonical thin public facade for game consumers (`play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`)
-  - emits stable snapshot-based state updates via `onStateChange(listener) -> unsubscribe`
-  - exposes legacy/deep runtime helpers only via unstable debug namespace (`window.__VIZUPLAYER_DEBUG__`) and not via the stable facade
-  - keeps command return semantics internal; external hosts rely on `getState()` + `onStateChange()`
-  - drives phase-derived status and control behavior
-  - runs one render loop for metrics + visualizer
-  - exports an injectable `bootstrap(options)` seam used by deterministic headless regression checks while preserving default browser auto-bootstrap behavior
-- `src/visual/visualizer.js`:
-  - renders active visual layers from phase-aware analysis input
-  - receives zero/decayed analysis during non-playing phases to prevent stale reactive visuals
-- `scripts/regression/command-phase-regression.mjs`:
-  - lightweight Node harness (no external framework)
-  - validates command/phase transitions, facade state subscriptions, and race-sensitive lifecycle boundaries against the stabilized Stage 3 baseline
+- Source loading and media lifecycle handling (local file + URL/demo)
+- Playback phase model and command orchestration
+- Analysis sampling and normalized reactive metrics
+- Stable integration facade contract on `window.vizuPlayer`
+- Deterministic lifecycle behavior under rapid/reordered command sequences
+
+## Non-Goals (For This Repo)
+
+- End-to-end consumer product UX ownership
+- App-layer onboarding, growth, or brand-polish strategy
+- Large product-surface visual programs as a primary roadmap driver
+
+Demo/UI work in this repository exists to validate and observe the core, not to define the final consumer app experience.
+
+## Boundaries
+
+### VizuPlayer Core Boundary (This Repository)
+
+- Runtime engine internals (`src/audio/*`, orchestration, analysis)
+- Stable public facade and state contract
+- Integration demo shell for local/browser validation
+
+### External App/Product Boundary (Adjacent Repository/Layer)
+
+- Consumer-facing product narrative and interaction design
+- Product-level visual language, onboarding, and retention loops
+- App-specific feature packaging beyond core engine guarantees
+
+## Current Layering
+
+- Audio engine layer (`src/audio/audioEngine.js`)
+- Playback phase/state layer (`src/audio/musicPlayer.js`)
+- Analysis layer (`src/audio/analyser.js`)
+- Orchestration + facade layer (`src/core/app.js`)
+- Demo UI + visualization layer (`src/ui/*`, `src/visual/*`, `index.html`)
+
+Integration is not a later afterthought: the facade/orchestration contract is already an active foundation of the current architecture.
+
+## Stable Integration Contract
+
+External hosts should integrate only through `window.vizuPlayer`:
+
+- `play()`
+- `pause()`
+- `stop()`
+- `loadTrack(url)`
+- `unload()`
+- `getState()`
+- `onStateChange(listener) -> unsubscribe`
+
+Deep runtime internals are intentionally separated into `window.__VIZUPLAYER_DEBUG__` and are not stable API commitments.
+
+## Why The Demo Surface Exists
+
+The current visual/demo surface is an integration proving ground:
+
+- Demonstrates that playback + lifecycle + analysis contracts work end to end
+- Helps validate state transitions and host behavior assumptions
+- Provides fast local/browser feedback during core evolution
+
+It should not be interpreted as the final flagship product layer.
 
 ## Known Constraints
 
 - Browser autoplay restrictions require user gesture before playback
 - `file://` module loading may be restricted; local HTTP serving is preferred
 - External URL tracks may require CORS-compatible hosting for decode/analysis
-- In-flight load-wait cancellation is deterministic via AbortSignal in orchestration; transport-level network cancellation remains browser-managed best effort
-- Missing favicon warning may appear in browser console and is currently treated as non-blocking runtime noise
+- Transport-level network cancellation remains browser-managed best effort
 
-## Technical Questions (Next)
+## Architecture Direction (Next)
 
-- How far to expand regression coverage beyond the current lightweight baseline without introducing heavy test infrastructure
-- API surface for external game runtime control contracts
-- Performance limits for per-frame analysis + rendering under heavier scenes
+- Keep core behavior deterministic and regression-backed
+- Increase API and consumption clarity for integrators
+- Improve integration examples without widening into app-layer product scope
+- Preserve strict boundary between engine concerns and standalone app concerns

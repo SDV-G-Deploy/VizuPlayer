@@ -1,5 +1,21 @@
 # SESSION_LOG
 
+## 2026-03-15 (Core / Docs & Positioning Sync Pass)
+
+- Executed a documentation-only strategic sync to lock repository identity as `VizuPlayer Core` (`Core / Engine / Integration Demo`).
+- Updated positioning docs to clearly state:
+  - what VizuPlayer is
+  - what it is not
+  - who it serves
+  - how it relates to an external standalone app-surface
+- Reframed roadmap and architecture around core stability/integration readiness instead of consumer-product surface expectations.
+- Added changelog/state updates for the strategic split between engine/demo responsibilities and adjacent app-layer responsibilities.
+- Preserved respect for prior implementation and visual work by framing it as retained architectural and integration value.
+- Scope discipline maintained:
+  - no changes in `src/audio/*`
+  - no changes in lifecycle/load orchestration behavior
+  - no changes in runtime facade behavior
+
 ## 2026-03-14
 
 - Confirmed access to repository workspace and baseline structure.

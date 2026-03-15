@@ -1,105 +1,80 @@
-# ROADMAP
+﻿# ROADMAP
 
-## Vision
+## Strategic Frame
 
-Build a reusable web music engine that can run standalone and serve as the audio core for browser games.
+VizuPlayer is positioned as **Core / Engine / Integration Demo**.
+
+This repository is the reusable runtime foundation for browser integrations and future app surfaces, not the final consumer product layer.
 
 ## Current Position
 
-- Stage: 3 - Lifecycle/load stable baseline accepted
+- Stage: Core baseline stabilized and reusable
 - Date: 2026-03-15
+- Status: Runtime, playback lifecycle, analysis pipeline, and thin integration facade are stable enough for integration-oriented iteration
 
-## Completed
+## Current Role
 
-- Baseline project documentation
-- Local-first workflow rules
-- Initial source tree and module placeholders
-- Browser bootstrap page and startup pipeline
-- MVP audio analysis pipeline (local file -> playback -> analyser -> band metrics)
-- First integrated canvas visualizer foundation (cosmic signal panel)
-- Node network overlay MVP layer integrated into active visualizer path
-- Lifecycle hardening pass:
-  - explicit app/player phases
-  - serialized latest-wins load orchestration
-  - stale async load completion suppression
-  - URL/demo deterministic load timeout path
-  - unified UI/public API command pipeline
-  - normalized pause/ended/stop analysis semantics
-- Stop/loading race-closure patch:
-  - in-flight load abort on STOP
-  - in-flight load abort on superseding latest load
-  - ended-vs-stop phase guard for late ended callbacks
-- Baseline acceptance validation completed:
-  - targeted abort/cancel fix-pass
-  - manual browser smoke (UI + window.vizuPlayer parity)
-  - post-fix re-audit PASS
-  - remaining known console noise: missing favicon (non-blocking)
-- Lightweight regression-check pass completed:
-  - added deterministic headless command/phase regression harness (`scripts/regression/command-phase-regression.mjs`)
-  - covered initial/bootstrap, load/play/pause/stop/stop-loading, latest-wins, stale-completion suppression, ended-stop guard, and UI/API parity path assumptions
-  - local regression harness baseline result: 10/10 PASS
-- Thin facade implementation pass (integration API shaping):
-  - added canonical facade subset on `window.vizuPlayer`: `play()`, `pause()`, `stop()`, `loadTrack(url)`, `unload()`, `getState()`, `onStateChange()`
-  - added orchestration-backed `unload()` reset path to force runtime back to `idle`
-  - added stable public state snapshot contract and listener subscribe/unsubscribe semantics
-  - expanded regression harness coverage for thin-facade behavior; local result: 13/13 PASS
-- Thin facade tiny corrective pass (contract leak closure):
-  - narrowed `window.vizuPlayer` to the canonical 7-method facade only
-  - moved legacy/deep refs (`commands.*`, `loadDemoTrack`, `loadBundledDemoTrack`, `loadLocalFile`, `getAnalysis`, internals) to unstable debug namespace `window.__VIZUPLAYER_DEBUG__`
-  - normalized public command methods to completion/error promises without exposing internal status taxonomy
-  - strengthened regression harness with exact facade key checks and forbidden-key guards
-- Debug source-reporting tiny pass (post-accept cleanup):
-  - `AudioEngine.getCurrentSource()` now returns `""` when `src` and `getAttribute("src")` are empty after unload, avoiding stale browser `currentSrc`
-  - added minimal targeted regression check `scripts/regression/unload-source-reporting-regression.mjs`
-  - local validation: targeted regression PASS; command/phase baseline remains `13/13 PASS`
-- Reactive Semantics Tuning / Luminous Cosmic Core narrow beauty-pass:
-  - de-globalized amplitude pumping in secondary layers (`nebula`, `grid`, `panel frame`, bars luminous mass)
-  - remapped core semantics: bass -> mass/radius, mid -> halo/flow field, treble -> white-hot core edge accents
-  - re-semantized node network: less amplitude-led visibility, stronger mid-led structure/flow, bass-led body weight, rarer treble spark accents
-  - constrained implementation to `src/visual/visualizer.js` and `src/visual/nodeNetwork.js`
-  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
-- Cosmic Beauty Reframe broad beauty-pass:
-  - rebuilt the scene in `src/visual/visualizer.js` into a five-layer depth stack (void backdrop, distant haze/dust, mid-field energy currents + plasma network, dominant layered cosmic core, selective foreground shards)
-  - replaced bottom-widget spectrum semantics with an integrated orbital spectrum corona tied to the core object
-  - removed schematic panel/grid feel and shifted motion language toward continuous drift/flow with selective highlights
-  - rebuilt `src/visual/nodeNetwork.js` from a sparse fixed diagram into a denser adaptive plasma topology with curved links, flow drift, and traveling pulse accents
-  - reframed `index.html` shell styling to support hero visual dominance and stronger composition cohesion while preserving all JS-bound DOM ids
-  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
+- Engine runtime for track loading, playback orchestration, and state transitions
+- Integration surface via stable `window.vizuPlayer` facade
+- Browser demo/sandbox that validates core behavior in real runtime conditions
+- Foundation for adjacent standalone app surfaces that can build separate UX/product layers
 
-- Less HUD, More Cosmic Phenomenon pass:
-  - aggressively reduced thin linear HUD-like geometry (fewer orbital strokes, fewer micro arcs, fewer network lines)
-  - rebuilt center language from spherical object read toward layered star-core / plasma bloom / singularity phenomenon
-  - simplified node network into a supporting plasma-flow layer with fewer nodes, fewer links, and lower diagram dominance
-  - introduced subtle temperature hierarchy (deep-space blue base, cyan/teal body, restrained white-hot highs, faint violet accents)
-  - reduced per-frame render complexity by cutting particle counts, lowering spectrum-corona segment density, and removing high-frequency curve clutter
-  - constrained changes to `src/visual/visualizer.js`, `src/visual/nodeNetwork.js`, and `index.html` styling
-  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
-- Flagship Product Surface Reframe pass:
-  - rebuilt `index.html` into a standalone product-first composition instead of a tool/demo bench layout
-  - replaced generic hero copy with product positioning focused on the listening-session experience
-  - introduced explicit first-screen launch scenarios:
-    - primary: try demo
-    - secondary: upload your track
-    - secondary: paste audio URL
-  - reframed controls language toward `Now Playing` and session flow semantics
-  - demoted diagnostics to an explicitly secondary advanced `<details>` block while preserving all runtime-bound ids
-  - preserved audio lifecycle/loading/integration contracts (no `src/audio/*` or facade changes)
-  - local validation remains green: command/phase regression `13/13 PASS` and unload source-reporting regression `PASS`
+## Completed Foundation (Relevant)
+
+- Lifecycle/load hardening with explicit phase model and latest-wins orchestration
+- Deterministic timeout/cancellation guardrails for load flows
+- Stable thin facade contract (`play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`)
+- Lightweight deterministic regression harness for lifecycle/command semantics
+- Visual/demo shell usable as integration validation surface
+
+## Workstreams
+
+### 1. Core Stability
+
+- Keep lifecycle/load semantics deterministic under race-prone scenarios
+- Maintain regression baseline as a required gate for core runtime changes
+- Continue narrow correctness passes without widening into app-layer concerns
+
+### 2. Integration Readiness
+
+- Improve integration documentation and host embedding guidance
+- Add practical integration examples for browser game/runtime consumers
+- Clarify host responsibilities vs. core responsibilities
+
+### 3. API / Consumption Clarity
+
+- Keep facade small, explicit, and versionable
+- Document stable contract guarantees and error/state semantics
+- Ensure debug namespace remains clearly non-contractual
+
+### 4. Demo Surface Hygiene
+
+- Keep demo shell useful for validation and debugging
+- Avoid treating demo UX as flagship consumer product direction
+- Allow targeted demo clarity improvements only when they improve integration confidence
+
+### 5. Future Relationship to Standalone App
+
+- Preserve a clean core/app split: runtime engine in this repo, product surface outside this repo
+- Support external app surfaces through stable engine contracts
+- Keep roadmap coordination points explicit without merging product ambitions into core scope
+
 ## Active Next
 
-- Run manual browser UX validation of the new flagship surface on desktop and mobile breakpoints:
-  - first-action clarity (demo primary path)
-  - launch-flow comprehension for upload/URL options
-  - hero-stage dominance versus support-column balance
-- Collect any copy/tone refinements after interactive review (without widening into audio/API scope).
-- Keep the regression harness green as the lifecycle/load baseline safety net for all future UI passes.
+- Complete docs and architecture sync around Core/Engine positioning
+- Tighten API documentation for consumption readiness
+- Add/refresh integration usage examples
+- Continue separation discipline between core runtime work and app-surface product work
+
+## Explicit Non-Goals (This Repository)
+
+- Building the flagship standalone consumer player inside VizuPlayer
+- Running broad consumer UX/UI productization programs in this repo
+- Expanding scope toward growth/brand/product-surface outcomes unrelated to engine readiness
 
 ## Milestones
-- M1: Foundation and structure
-- M2: Playback + analysis MVP
-- M3: Visualization and timing sync basics
-- M4: Integration API for game clients
-- M5: Hardening and packaging
 
-
-
+- C1: Core runtime stability baseline (accepted)
+- C2: Integration documentation and API clarity uplift (active)
+- C3: Consumption/packaging readiness for external app surfaces
+- C4: Ongoing core maintenance and integration evolution

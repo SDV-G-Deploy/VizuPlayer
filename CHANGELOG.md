@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (Core Positioning & Docs Sync)
+
+- Repositioned VizuPlayer as **Core / Engine / Integration Demo** in project documentation.
+- Synced README, roadmap, architecture, and project-state docs to clarify what VizuPlayer is, what it is not, and who it serves.
+- Clarified boundary between engine/demo responsibilities in this repository and standalone consumer app-surface responsibilities in an adjacent layer.
+- Refreshed active roadmap priorities around core stability, integration readiness, API consumption clarity, and demo-surface hygiene.
+
+
 ### Added
 
 - Explicit player/app phase model in `src/audio/musicPlayer.js`:

@@ -1,5 +1,26 @@
 # CHANGELOG_AGENT
 
+## 2026-03-15
+
+### Updated (Core / Docs & Positioning Sync Pass)
+
+- Repositioned documentation to define VizuPlayer as `Core / Engine / Integration Demo`.
+- Updated `README.md` with explicit sections for:
+  - what VizuPlayer is
+  - what VizuPlayer is not
+  - who it is for
+  - current scope
+  - relationship to external standalone app-surface
+- Reworked `ROADMAP.md` around core-first tracks:
+  - core stability
+  - integration readiness
+  - API/consumption clarity
+  - demo-surface hygiene
+  - future relationship to standalone app
+- Updated `ARCHITECTURE.md` boundaries and non-goals so demo UI is not misread as flagship consumer product direction.
+- Added `CHANGELOG.md` entry documenting repositioning and docs/architecture sync.
+- Synced `docs/PROJECT_STATE.md` to reflect the intended core/app split and current strategic target.
+
 ## 2026-03-14
 
 ### Updated
