@@ -3,29 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VizuPlayer | Listening Sessions</title>
+  <title>VizuPlayer Core | Integration Demo</title>
   <style>
     :root {
       color-scheme: dark;
       font-family: "Sora", "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
-      --page-bg: #040911;
-      --text-main: #f3f8ff;
-      --text-soft: rgba(221, 236, 252, 0.76);
-      --text-muted: rgba(182, 210, 235, 0.66);
-      --shell-top: rgba(10, 19, 42, 0.9);
-      --shell-bottom: rgba(5, 10, 24, 0.94);
-      --shell-border: rgba(142, 199, 244, 0.24);
-      --card-bg: rgba(10, 20, 44, 0.56);
-      --card-border: rgba(145, 201, 244, 0.22);
-      --primary: #8cddff;
-      --primary-strong: #4eb8ff;
-      --primary-border: rgba(169, 221, 255, 0.62);
-      --button-bg: rgba(28, 76, 140, 0.46);
-      --button-bg-hover: rgba(46, 114, 192, 0.62);
-      --button-primary-top: #8de4ff;
-      --button-primary-bottom: #3b93ff;
-      --button-primary-text: #021021;
-      --shadow-soft: 0 22px 48px rgba(2, 9, 24, 0.52);
+      --bg-deep: #040910;
+      --bg-mid: #091423;
+      --ink-main: #ebf6ff;
+      --ink-soft: rgba(210, 230, 247, 0.78);
+      --ink-muted: rgba(176, 204, 225, 0.7);
+      --surface-top: rgba(9, 20, 40, 0.9);
+      --surface-bottom: rgba(4, 10, 23, 0.93);
+      --surface-border: rgba(143, 197, 236, 0.24);
+      --card-bg: rgba(10, 23, 45, 0.62);
+      --card-border: rgba(131, 185, 222, 0.24);
+      --accent: #8ad9ff;
+      --accent-strong: #3ea1ef;
+      --accent-warm: #79f0d2;
+      --button-bg: rgba(23, 68, 122, 0.46);
+      --button-hover: rgba(44, 104, 174, 0.62);
+      --button-primary-top: #95ebff;
+      --button-primary-bottom: #46a6ff;
+      --button-primary-text: #031426;
+      --shadow-large: 0 34px 74px rgba(1, 8, 21, 0.6);
+      --shadow-card: 0 14px 34px rgba(2, 9, 25, 0.34);
     }
 
     * {
@@ -35,162 +37,238 @@
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 24px;
-      color: var(--text-main);
+      padding: 20px;
+      color: var(--ink-main);
       background:
-        radial-gradient(120% 100% at 50% -20%, rgba(61, 123, 215, 0.32), transparent 58%),
-        radial-gradient(88% 120% at -10% 20%, rgba(30, 86, 168, 0.28), transparent 66%),
-        radial-gradient(80% 110% at 108% 14%, rgba(28, 109, 164, 0.22), transparent 68%),
-        linear-gradient(158deg, #050913 0%, #040915 42%, #03070f 100%);
+        radial-gradient(120% 90% at 50% -8%, rgba(57, 116, 184, 0.34), transparent 56%),
+        radial-gradient(70% 96% at -8% 12%, rgba(46, 105, 173, 0.24), transparent 64%),
+        radial-gradient(72% 90% at 110% 8%, rgba(40, 114, 166, 0.2), transparent 66%),
+        linear-gradient(156deg, #050b14 0%, #040a13 44%, #03070d 100%);
     }
 
-    .flagship-shell {
-      position: relative;
-      isolation: isolate;
-      width: min(1280px, 100%);
-      margin: 0 auto;
-      padding: 22px;
-      border-radius: 28px;
-      border: 1px solid var(--shell-border);
-      background: linear-gradient(184deg, var(--shell-top), var(--shell-bottom));
-      box-shadow:
-        0 36px 78px rgba(1, 6, 16, 0.62),
-        inset 0 1px 0 rgba(192, 232, 255, 0.08);
-      display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(288px, 0.9fr);
-      gap: 18px;
-    }
-
-    .flagship-shell::before {
+    body::before {
       content: "";
-      position: absolute;
-      inset: 1px;
-      border-radius: 26px;
+      position: fixed;
+      inset: 0;
       pointer-events: none;
-      background:
-        radial-gradient(74% 66% at 46% 0%, rgba(88, 166, 238, 0.12), transparent 70%),
-        linear-gradient(180deg, rgba(188, 227, 255, 0.06), transparent 28%);
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(173, 217, 246, 0.14) 0 1px, transparent 1px),
+        radial-gradient(circle at 78% 22%, rgba(162, 223, 255, 0.1) 0 1px, transparent 1px),
+        radial-gradient(circle at 28% 72%, rgba(145, 199, 236, 0.1) 0 1px, transparent 1px),
+        radial-gradient(circle at 84% 76%, rgba(166, 222, 255, 0.11) 0 1px, transparent 1px);
+      opacity: 0.32;
       z-index: -1;
     }
 
-    .hero-stage {
+    .core-shell {
+      position: relative;
+      isolation: isolate;
+      width: min(1320px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 28px;
+      border: 1px solid var(--surface-border);
+      background: linear-gradient(186deg, var(--surface-top), var(--surface-bottom));
+      box-shadow: var(--shadow-large), inset 0 1px 0 rgba(188, 227, 255, 0.09);
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.95fr);
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .core-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(70% 54% at 46% -4%, rgba(112, 192, 244, 0.13), transparent 72%),
+        linear-gradient(180deg, rgba(188, 225, 248, 0.06), transparent 26%);
+      z-index: -1;
+    }
+
+    .core-main {
       display: grid;
       gap: 14px;
       align-content: start;
     }
 
-    .hero-copy {
+    .hero,
+    .source-flow,
+    .visual-stage,
+    .runtime-column > * {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: reveal 520ms ease forwards;
+    }
+
+    .hero {
+      animation-delay: 30ms;
+    }
+
+    .source-flow {
+      animation-delay: 90ms;
+    }
+
+    .visual-stage {
+      animation-delay: 150ms;
+    }
+
+    .runtime-column > *:nth-child(1) {
+      animation-delay: 210ms;
+    }
+
+    .runtime-column > *:nth-child(2) {
+      animation-delay: 260ms;
+    }
+
+    .runtime-column > *:nth-child(3) {
+      animation-delay: 310ms;
+    }
+
+    .runtime-column > *:nth-child(4) {
+      animation-delay: 360ms;
+    }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero {
       margin: 0;
-      padding: 2px 2px 4px;
+      padding: 4px 4px 0;
       display: grid;
-      gap: 8px;
+      gap: 9px;
     }
 
     .brand-kicker {
       margin: 0;
       font-size: 0.73rem;
       font-weight: 700;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(170, 224, 255, 0.92);
+      color: rgba(160, 220, 255, 0.9);
     }
 
     h1 {
       margin: 0;
-      max-width: 26ch;
-      font-size: clamp(1.78rem, 3vw, 2.7rem);
+      max-width: 24ch;
+      font-size: clamp(1.72rem, 2.8vw, 2.66rem);
       line-height: 1.1;
       letter-spacing: 0.01em;
-      color: rgba(243, 250, 255, 0.99);
+      color: rgba(244, 250, 255, 0.98);
     }
 
     .subtitle {
       margin: 0;
-      max-width: 66ch;
-      font-size: 0.98rem;
+      max-width: 68ch;
+      font-size: 0.96rem;
       line-height: 1.5;
-      color: var(--text-soft);
+      color: var(--ink-soft);
     }
 
-    .launch-deck {
+    .role-pills {
+      margin: 4px 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .role-pills li {
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: rgba(8, 26, 45, 0.95);
+      background: linear-gradient(170deg, rgba(162, 228, 255, 0.94), rgba(118, 206, 252, 0.9));
+      box-shadow: inset 0 1px 0 rgba(244, 252, 255, 0.72);
+    }
+
+    .source-flow {
       margin: 0;
-      padding: 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(145, 205, 244, 0.24);
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(142, 198, 236, 0.24);
       background:
-        linear-gradient(170deg, rgba(15, 32, 64, 0.72), rgba(8, 17, 35, 0.76)),
-        radial-gradient(120% 160% at 0% 0%, rgba(96, 158, 232, 0.16), transparent 54%);
-      box-shadow: var(--shadow-soft);
+        linear-gradient(166deg, rgba(13, 30, 57, 0.76), rgba(8, 17, 34, 0.78)),
+        radial-gradient(120% 120% at 0% 0%, rgba(105, 177, 235, 0.16), transparent 58%);
+      box-shadow: var(--shadow-card);
     }
 
-    .launch-title {
-      margin: 0 0 12px;
-      font-size: 0.92rem;
+    .flow-title {
+      margin: 0 0 10px;
+      font-size: 0.86rem;
       font-weight: 700;
       letter-spacing: 0.11em;
       text-transform: uppercase;
-      color: rgba(181, 225, 255, 0.9);
+      color: rgba(177, 222, 253, 0.9);
     }
 
-    .launch-grid {
+    .flow-grid {
       display: grid;
       gap: 10px;
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .launch-card {
+    .flow-card {
       margin: 0;
       padding: 12px;
       border-radius: 14px;
       border: 1px solid var(--card-border);
       background: var(--card-bg);
-      box-shadow: inset 0 1px 0 rgba(192, 230, 255, 0.08);
+      box-shadow: inset 0 1px 0 rgba(198, 231, 255, 0.08);
       display: grid;
-      gap: 8px;
+      gap: 7px;
       align-content: start;
     }
 
-    .launch-card-primary {
-      border-color: var(--primary-border);
+    .flow-card-primary {
+      border-color: rgba(166, 222, 255, 0.58);
       background:
-        linear-gradient(170deg, rgba(15, 40, 78, 0.78), rgba(9, 24, 49, 0.78)),
-        radial-gradient(140% 120% at 0% 0%, rgba(131, 213, 255, 0.2), transparent 58%);
+        linear-gradient(166deg, rgba(12, 40, 74, 0.8), rgba(8, 23, 46, 0.78)),
+        radial-gradient(140% 130% at 0% 0%, rgba(127, 207, 251, 0.22), transparent 58%);
     }
 
-    .launch-step {
+    .flow-step {
       margin: 0;
       width: fit-content;
-      padding: 3px 8px;
       border-radius: 999px;
+      padding: 3px 8px;
       font-size: 0.67rem;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(12, 25, 44, 0.95);
-      background: rgba(173, 227, 255, 0.88);
+      color: rgba(10, 26, 45, 0.95);
+      background: rgba(175, 228, 255, 0.9);
     }
 
-    .launch-card h3 {
+    .flow-card h2 {
       margin: 0;
-      font-size: 1.02rem;
+      font-size: 1rem;
       line-height: 1.25;
-      letter-spacing: 0.01em;
     }
 
-    .launch-card p {
+    .flow-card p {
       margin: 0;
-      font-size: 0.83rem;
+      color: var(--ink-muted);
+      font-size: 0.82rem;
       line-height: 1.45;
-      color: var(--text-muted);
     }
 
     input[type="file"],
     #track-url-input {
       width: 100%;
       border-radius: 10px;
-      border: 1px solid rgba(150, 205, 245, 0.31);
-      background: rgba(6, 15, 34, 0.72);
-      color: var(--text-main);
+      border: 1px solid rgba(150, 203, 240, 0.31);
+      background: rgba(6, 17, 37, 0.72);
+      color: var(--ink-main);
       padding: 10px;
       font: inherit;
     }
@@ -200,10 +278,10 @@
     }
 
     button {
-      border: 1px solid rgba(154, 210, 247, 0.38);
-      background: var(--button-bg);
-      color: #eaf7ff;
+      border: 1px solid rgba(155, 209, 245, 0.4);
       border-radius: 10px;
+      background: var(--button-bg);
+      color: #ebf8ff;
       padding: 10px 12px;
       cursor: pointer;
       font-weight: 650;
@@ -211,33 +289,41 @@
       transition:
         background-color 140ms ease,
         border-color 140ms ease,
-        transform 140ms ease;
+        transform 140ms ease,
+        box-shadow 140ms ease;
+    }
+
+    button:hover:enabled {
+      background: var(--button-hover);
+      border-color: rgba(188, 230, 255, 0.66);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(14, 52, 96, 0.34);
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid rgba(156, 225, 255, 0.9);
+      outline-offset: 2px;
     }
 
     .button-primary {
       color: var(--button-primary-text);
-      border-color: rgba(183, 232, 255, 0.8);
+      border-color: rgba(195, 236, 255, 0.82);
       background: linear-gradient(180deg, var(--button-primary-top), var(--button-primary-bottom));
-      box-shadow:
-        inset 0 1px 0 rgba(246, 253, 255, 0.56),
-        0 14px 22px rgba(39, 105, 171, 0.33);
-    }
-
-    button:hover:enabled {
-      background: var(--button-bg-hover);
-      border-color: rgba(189, 231, 255, 0.65);
-      transform: translateY(-1px);
+      box-shadow: inset 0 1px 0 rgba(245, 252, 255, 0.58), 0 12px 22px rgba(34, 97, 166, 0.36);
     }
 
     .button-primary:hover:enabled {
-      background: linear-gradient(180deg, #a8ecff, #54a7ff);
-      border-color: rgba(211, 241, 255, 0.86);
+      background: linear-gradient(180deg, #abedff, #55b0ff);
+      border-color: rgba(210, 241, 255, 0.88);
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.52;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
     .visual-stage {
@@ -246,47 +332,44 @@
       gap: 10px;
     }
 
-    .visualizer-shell {
+    .visual-frame {
       position: relative;
       isolation: isolate;
       border-radius: 24px;
       overflow: hidden;
-      border: 1px solid rgba(140, 200, 245, 0.34);
-      background: linear-gradient(182deg, rgba(3, 8, 21, 0.99), rgba(1, 4, 13, 0.99));
-      box-shadow:
-        inset 0 0 0 1px rgba(179, 226, 255, 0.1),
-        inset 0 30px 68px rgba(54, 125, 189, 0.09),
-        0 28px 56px rgba(2, 10, 28, 0.58);
+      border: 1px solid rgba(133, 194, 235, 0.34);
+      background: linear-gradient(182deg, rgba(3, 8, 20, 0.99), rgba(1, 4, 12, 0.99));
+      box-shadow: inset 0 0 0 1px rgba(181, 223, 251, 0.1), inset 0 30px 70px rgba(50, 118, 180, 0.1), 0 30px 58px rgba(2, 10, 28, 0.58);
     }
 
-    .visualizer-shell::before,
-    .visualizer-shell::after {
+    .visual-frame::before,
+    .visual-frame::after {
       content: "";
       position: absolute;
       inset: 0;
       pointer-events: none;
     }
 
-    .visualizer-shell::before {
-      background: radial-gradient(72% 44% at 50% 10%, rgba(102, 196, 245, 0.11), transparent 70%);
+    .visual-frame::before {
+      background: radial-gradient(68% 40% at 50% 12%, rgba(100, 190, 242, 0.11), transparent 72%);
       mix-blend-mode: screen;
     }
 
-    .visualizer-shell::after {
-      background: linear-gradient(180deg, rgba(181, 226, 253, 0.05), rgba(38, 82, 136, 0.03) 24%, transparent 58%);
+    .visual-frame::after {
+      background: linear-gradient(180deg, rgba(178, 223, 250, 0.05), rgba(37, 82, 137, 0.03) 24%, transparent 58%);
     }
 
     #visualizer-canvas {
       display: block;
       width: 100%;
-      height: clamp(360px, 60vh, 620px);
+      height: clamp(350px, 60vh, 620px);
     }
 
     .stage-overlay {
       position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -296,66 +379,63 @@
 
     .stage-label {
       margin: 0;
-      font-size: 0.67rem;
+      font-size: 0.66rem;
       font-weight: 700;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: rgba(188, 229, 249, 0.68);
+      color: rgba(183, 223, 247, 0.67);
     }
 
     .stage-copy {
       margin: 0;
-      font-size: 0.8rem;
       text-align: right;
-      color: rgba(196, 228, 248, 0.72);
+      font-size: 0.79rem;
+      color: rgba(189, 222, 244, 0.74);
     }
 
-    .support-column {
+    .runtime-column {
       display: grid;
       gap: 12px;
       align-content: start;
     }
 
-    .control-card {
+    .panel {
       margin: 0;
       padding: 14px;
       border-radius: 14px;
       border: 1px solid var(--card-border);
       background: var(--card-bg);
-      box-shadow:
-        inset 0 1px 0 rgba(190, 226, 253, 0.08),
-        0 12px 28px rgba(2, 10, 27, 0.24);
+      box-shadow: inset 0 1px 0 rgba(190, 226, 252, 0.08), var(--shadow-card);
     }
 
-    .control-card h2 {
+    .panel h2 {
       margin: 0 0 8px;
       font-size: 0.84rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(186, 228, 255, 0.88);
+      color: rgba(185, 227, 255, 0.89);
     }
 
-    .card-copy {
+    .panel-copy {
       margin: 0 0 10px;
-      color: var(--text-muted);
+      color: var(--ink-muted);
       font-size: 0.84rem;
       line-height: 1.45;
     }
 
     #player-status {
-      margin: 0 0 12px;
+      margin: 0 0 11px;
       width: 100%;
-      max-width: 100%;
       padding: 8px 11px;
       border-radius: 10px;
+      border: 1px solid rgba(149, 208, 246, 0.38);
+      background: rgba(13, 50, 93, 0.56);
+      color: #d8f1ff;
+      box-shadow: inset 0 1px 0 rgba(212, 237, 255, 0.12);
       font-size: 0.8rem;
       font-weight: 700;
       letter-spacing: 0.03em;
-      border: 1px solid rgba(150, 213, 251, 0.38);
-      background: rgba(14, 53, 98, 0.54);
-      color: #daf3ff;
-      box-shadow: inset 0 1px 0 rgba(211, 237, 255, 0.12);
     }
 
     .transport-row {
@@ -366,25 +446,38 @@
 
     .hint {
       margin: 10px 0 0;
-      color: rgba(196, 225, 248, 0.7);
+      color: rgba(196, 226, 248, 0.72);
       font-size: 0.79rem;
       line-height: 1.4;
     }
 
-    .benefit-list {
+    .fit-list {
       margin: 0;
       padding-left: 16px;
-      color: var(--text-muted);
+      color: var(--ink-muted);
       font-size: 0.82rem;
       line-height: 1.5;
       display: grid;
       gap: 4px;
     }
 
+    .contract-snippet {
+      margin: 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(114, 169, 221, 0.23);
+      background: rgba(4, 13, 30, 0.66);
+      color: rgba(196, 228, 249, 0.84);
+      font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
     .diagnostics {
-      border: 1px solid rgba(125, 178, 225, 0.2);
+      border: 1px solid rgba(124, 178, 223, 0.22);
       border-radius: 14px;
-      background: rgba(4, 12, 28, 0.44);
+      background: rgba(4, 12, 28, 0.5);
       padding: 10px 12px 12px;
       box-shadow: inset 0 1px 0 rgba(181, 216, 244, 0.05);
     }
@@ -396,7 +489,7 @@
       letter-spacing: 0.09em;
       text-transform: uppercase;
       font-weight: 700;
-      color: rgba(153, 204, 245, 0.78);
+      color: rgba(152, 204, 244, 0.8);
     }
 
     .diagnostics summary::-webkit-details-marker {
@@ -411,19 +504,19 @@
     }
 
     .metric {
-      border: 1px solid rgba(114, 169, 221, 0.2);
+      border: 1px solid rgba(114, 168, 220, 0.21);
       border-radius: 10px;
       padding: 8px;
-      background: rgba(7, 17, 38, 0.56);
+      background: rgba(7, 16, 37, 0.56);
     }
 
     .metric-name {
       display: block;
+      margin-bottom: 4px;
       font-size: 0.71rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      color: rgba(192, 225, 251, 0.7);
-      margin-bottom: 4px;
+      color: rgba(191, 224, 250, 0.7);
     }
 
     .metric-value {
@@ -437,7 +530,7 @@
       margin: 8px 0 0;
       padding: 10px;
       border-radius: 10px;
-      border: 1px solid rgba(118, 173, 236, 0.22);
+      border: 1px solid rgba(118, 173, 235, 0.22);
       background: rgba(4, 11, 26, 0.62);
       font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
       font-size: 0.76rem;
@@ -445,45 +538,46 @@
       white-space: pre-wrap;
     }
 
-    @media (max-width: 1120px) {
-      .flagship-shell {
+    @media (max-width: 1140px) {
+      .core-shell {
         grid-template-columns: 1fr;
       }
 
-      .support-column {
+      .runtime-column {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .support-column .diagnostics {
+      .runtime-column .diagnostics,
+      .runtime-column .panel:nth-child(3) {
         grid-column: 1 / -1;
       }
     }
 
-    @media (max-width: 960px) {
-      .launch-grid {
+    @media (max-width: 980px) {
+      .flow-grid {
         grid-template-columns: 1fr;
       }
 
       #visualizer-canvas {
-        height: clamp(300px, 52vh, 480px);
+        height: clamp(300px, 52vh, 470px);
       }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 720px) {
       body {
-        padding: 14px;
-      }
-
-      .flagship-shell {
-        padding: 16px;
-        gap: 12px;
-      }
-
-      .launch-deck {
         padding: 12px;
       }
 
-      .support-column {
+      .core-shell {
+        padding: 14px;
+        gap: 12px;
+      }
+
+      .source-flow {
+        padding: 12px;
+      }
+
+      .runtime-column {
         grid-template-columns: 1fr;
       }
 
@@ -503,78 +597,95 @@
   </style>
 </head>
 <body>
-  <main class="flagship-shell">
-    <section class="hero-stage" aria-label="VizuPlayer listening experience">
-      <header class="hero-copy">
-        <p class="brand-kicker">VizuPlayer Standalone</p>
-        <h1>Turn every track into a cinematic listening session.</h1>
+  <main class="core-shell">
+    <section class="core-main" aria-label="VizuPlayer Core integration demo surface">
+      <header class="hero">
+        <p class="brand-kicker">VizuPlayer Core</p>
+        <h1>Reliable browser audio engine with a live integration stage.</h1>
         <p class="subtitle">
-          This is not a tech bench. It is your launch surface: choose a source, press play, and let the stage react to every beat.
+          This surface exists to validate the core in real conditions: load a source, drive the runtime, and observe audio-reactive behavior through one stable playback and analysis contract.
         </p>
+        <ul class="role-pills" aria-label="Core role markers">
+          <li>Core Runtime</li>
+          <li>Integration Demo</li>
+          <li>Facade Ready</li>
+        </ul>
       </header>
 
-      <section class="launch-deck" aria-label="Session launch options">
-        <h2 class="launch-title">Choose your first move</h2>
-        <div class="launch-grid">
-          <article class="launch-card launch-card-primary" aria-label="Try demo">
-            <p class="launch-step">Primary</p>
-            <h3>Try the demo</h3>
-            <p>Instant start with a curated track that showcases the full visual session.</p>
-            <button id="load-demo-button" class="button-primary">Launch Demo Session</button>
+      <section class="source-flow" aria-label="Source loading flow">
+        <h2 class="flow-title">Start A Validation Run</h2>
+        <div class="flow-grid">
+          <article class="flow-card flow-card-primary" aria-label="Quick demo start">
+            <p class="flow-step">Step 1</p>
+            <h2>Quick Demo</h2>
+            <p>Load a known-good track instantly to verify baseline behavior before custom sources.</p>
+            <button id="load-demo-button" class="button-primary">Load Demo Track</button>
           </article>
 
-          <article class="launch-card" aria-label="Upload your track">
-            <p class="launch-step">Option 2</p>
-            <h3>Upload your track</h3>
-            <p>Bring your own local audio file and run a personal visual listening pass.</p>
+          <article class="flow-card" aria-label="Local file input">
+            <p class="flow-step">Step 2A</p>
+            <h2>Local File</h2>
+            <p>Use your own audio file for local playback and analysis validation.</p>
             <input id="audio-file-input" type="file" accept="audio/*" />
           </article>
 
-          <article class="launch-card" aria-label="Paste audio URL">
-            <p class="launch-step">Option 3</p>
-            <h3>Paste audio URL</h3>
-            <p>Load a direct URL or asset path and start playback from a hosted source.</p>
+          <article class="flow-card" aria-label="URL track input">
+            <p class="flow-step">Step 2B</p>
+            <h2>URL Or Asset</h2>
+            <p>Load a direct URL or relative asset path to validate hosted-source flow.</p>
             <input
               id="track-url-input"
               type="text"
               placeholder="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
               value="./assets/music/little-more-intense-cosmo-puzzle-1.mp3"
             />
-            <button id="load-url-button">Load from URL</button>
+            <button id="load-url-button">Load URL Source</button>
           </article>
         </div>
       </section>
 
-      <section class="visual-stage" aria-label="Reactive visual field">
-        <div class="visualizer-shell">
+      <section class="visual-stage" aria-label="Reactive visual stage">
+        <div class="visual-frame">
           <canvas id="visualizer-canvas" width="780" height="260" aria-label="Audio visualizer canvas"></canvas>
           <div class="stage-overlay">
-            <span class="stage-label">Live Reactive Stage</span>
-            <p class="stage-copy">Bass, mids, treble, and energy shape this scene in real time.</p>
+            <span class="stage-label">Integration Demo Stage</span>
+            <p class="stage-copy">Bass, mid, treble, and amplitude drive the scene in real time.</p>
           </div>
         </div>
       </section>
     </section>
 
-    <aside class="support-column" aria-label="Now playing and session controls">
-      <section class="control-card" aria-label="Now playing controls">
-        <h2>Now Playing</h2>
-        <p class="card-copy">After loading a source, hit play to launch the listening experience.</p>
+    <aside class="runtime-column" aria-label="Runtime controls and diagnostics">
+      <section class="panel" aria-label="Playback controls">
+        <h2>Runtime Controls</h2>
+        <p class="panel-copy">After loading a source, run transport commands and inspect stable state behavior.</p>
         <p id="player-status">Status: waiting for track</p>
         <div class="transport-row">
-          <button id="play-button" disabled>Play Session</button>
+          <button id="play-button" disabled>Play</button>
           <button id="pause-button" disabled>Pause</button>
           <button id="stop-button" disabled>Stop</button>
         </div>
-        <p class="hint">Quick path: launch demo first, then switch to your own track.</p>
+        <p class="hint">Fast path: load demo first, then switch to local or URL source.</p>
       </section>
 
-      <section class="control-card" aria-label="Session value">
-        <h2>Why Try It</h2>
-        <ul class="benefit-list">
-          <li>One-click start with a ready-to-play demo.</li>
-          <li>Works with local uploads and hosted audio links.</li>
-          <li>Built for immersive listening and future game integration.</li>
+      <section class="panel" aria-label="Integration contract">
+        <h2>Stable Host Facade</h2>
+        <p class="panel-copy">External integrations should use only the public facade below.</p>
+        <pre class="contract-snippet">window.vizuPlayer.play()
+window.vizuPlayer.pause()
+window.vizuPlayer.stop()
+window.vizuPlayer.loadTrack(url)
+window.vizuPlayer.unload()
+window.vizuPlayer.getState()
+window.vizuPlayer.onStateChange(fn)</pre>
+      </section>
+
+      <section class="panel" aria-label="Use case fit">
+        <h2>Best Fit</h2>
+        <ul class="fit-list">
+          <li>Browser game and interactive runtime integrations</li>
+          <li>Audio-reactive prototypes and experiment surfaces</li>
+          <li>App-layer teams that need a reusable engine foundation</li>
         </ul>
       </section>
 

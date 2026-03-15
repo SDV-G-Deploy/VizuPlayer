@@ -1,4 +1,4 @@
-﻿# ROADMAP
+# ROADMAP
 
 ## Strategic Frame
 
@@ -26,6 +26,7 @@ This repository is the reusable runtime foundation for browser integrations and 
 - Stable thin facade contract (`play`, `pause`, `stop`, `loadTrack`, `unload`, `getState`, `onStateChange`)
 - Lightweight deterministic regression harness for lifecycle/command semantics
 - Visual/demo shell usable as integration validation surface
+- Core-first demo-surface cohesion pass in `index.html` (positioning-aligned copy, clearer validation flow, improved responsive shell hierarchy)
 
 ## Workstreams
 
@@ -61,7 +62,7 @@ This repository is the reusable runtime foundation for browser integrations and 
 
 ## Active Next
 
-- Complete docs and architecture sync around Core/Engine positioning
+- Run manual browser validation of the updated core demo flow on desktop/mobile breakpoints
 - Tighten API documentation for consumption readiness
 - Add/refresh integration usage examples
 - Continue separation discipline between core runtime work and app-surface product work

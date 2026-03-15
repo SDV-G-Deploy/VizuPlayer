@@ -1,10 +1,10 @@
-﻿# PROJECT_STATE
+# PROJECT_STATE
 
 ## Current Focus
 
-VizuPlayer is now explicitly maintained as **Core / Engine / Integration Demo**.
+VizuPlayer is explicitly maintained as **Core / Engine / Integration Demo**.
 
-Current work focuses on core reliability, integration readiness, and consumption clarity. Consumer-facing standalone app ambitions are intentionally split into an adjacent app-surface layer.
+Current work focuses on core reliability, integration readiness, consumption clarity, and a coherent integration-demo surface. Consumer-facing standalone app ambitions are intentionally split into an adjacent app-surface layer.
 
 ## Strategic Position
 
@@ -48,6 +48,16 @@ Current work focuses on core reliability, integration readiness, and consumption
 
 - `node scripts/regression/command-phase-regression.mjs` -> `SUMMARY 13/13 passing`
 - `node scripts/regression/unload-source-reporting-regression.mjs` -> `PASS post-unload source-reporting`
+
+## 2026-03-15 Update (Core Demo Surface Cohesion Pass)
+
+- Reworked `index.html` as a clearer core-first integration surface instead of standalone-consumer messaging.
+- Improved launch flow clarity (`quick demo`, `local file`, `URL/asset`) and runtime-panel framing while preserving all runtime DOM bindings.
+- Increased visual cohesion and mobile/desktop readability through shell/card hierarchy and responsive tuning.
+- Scope remained safe:
+  - no `src/audio/*` changes
+  - no lifecycle/loading/orchestration changes
+  - no stable facade/API behavior changes
 
 ## 2026-03-15 Update (Core Positioning & Docs Sync)
 

@@ -1,5 +1,20 @@
 # SESSION_LOG
 
+## 2026-03-15 (Core Demo Surface Cohesion Pass)
+
+- Executed a coherent UI/copy shell pass in `index.html` to align visible surface with `VizuPlayer Core` positioning.
+- Replaced standalone-consumer-first framing with integration/demo-first messaging while keeping the page visually strong.
+- Restructured first-run flow into explicit validation paths:
+  - quick demo
+  - local file
+  - URL/asset path
+- Improved runtime-side panel clarity (`Runtime Controls`, stable facade snippet, best-fit use cases) and preserved all runtime-required DOM ids.
+- Added tasteful shell/card hierarchy and staged reveal motion for smoother perceived flow across desktop/mobile breakpoints.
+- Scope safety held:
+  - no `src/audio/*` changes
+  - no lifecycle/orchestration/loading behavior changes
+  - no stable API facade behavior changes
+
 ## 2026-03-15 (Core / Docs & Positioning Sync Pass)
 
 - Executed a documentation-only strategic sync to lock repository identity as `VizuPlayer Core` (`Core / Engine / Integration Demo`).

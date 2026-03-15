@@ -2,6 +2,21 @@
 
 ## 2026-03-15
 
+### Updated (Core Demo Surface Cohesion Pass)
+
+- Reworked `index.html` into a more coherent core-first product surface for integration/demo usage.
+- Replaced standalone flagship messaging with copy aligned to engine/runtime validation purpose.
+- Improved launch flow composition with clearer first actions:
+  - quick demo start
+  - local file validation
+  - URL/asset validation
+- Tightened runtime-side information architecture:
+  - explicit transport control panel
+  - stable facade snippet for host integrators
+  - best-fit use-case panel
+- Refined visual hierarchy, spacing, and responsive behavior for smoother desktop/mobile usage.
+- Preserved baseline safety: no audio/lifecycle/API contract changes.
+
 ### Updated (Core / Docs & Positioning Sync Pass)
 
 - Repositioned documentation to define VizuPlayer as `Core / Engine / Integration Demo`.

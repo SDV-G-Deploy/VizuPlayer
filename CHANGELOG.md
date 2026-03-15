@@ -12,6 +12,21 @@ All notable changes to this project will be documented in this file.
 - Refreshed active roadmap priorities around core stability, integration readiness, API consumption clarity, and demo-surface hygiene.
 
 
+### Changed (Core Demo Surface Cohesion Pass)
+
+- Reframed `index.html` into a more coherent core-first integration surface:
+  - removed standalone/flagship consumer framing from hero and launch copy
+  - clarified validation flow (`quick demo`, `local file`, `URL/asset source`)
+  - aligned controls and support panels to runtime/integration responsibilities
+- Improved UI cohesion and readability without changing runtime contracts:
+  - stronger visual hierarchy between source flow, reactive stage, and runtime control column
+  - refined card/shell styling, spacing, and responsive behavior for desktop/mobile
+  - added light staged reveal motion for better perceived flow while preserving accessibility (`focus-visible`, reduced interaction friction)
+- Kept scope intentionally non-invasive:
+  - no `src/audio/*` changes
+  - no lifecycle/orchestration behavior changes
+  - no `window.vizuPlayer` facade contract changes
+
 ### Added
 
 - Explicit player/app phase model in `src/audio/musicPlayer.js`:
@@ -40,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - Concurrent rapid load requests no longer commit stale results into final runtime state.
 - URL/demo load path no longer hangs indefinitely on unresolved sources.
 - Public API playback/load commands now follow the same orchestrated state path as UI controls.
+
 
 ### Added
 
